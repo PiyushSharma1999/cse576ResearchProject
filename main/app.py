@@ -70,7 +70,7 @@ def main():
 
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     data_folder = os.path.join(project_root, "main/data")
-    file_path = os.path.join(data_folder, "output.csv")
+    file_path = os.path.join(data_folder, "output_asrakm.csv")
 
     # Ensure the data folder exists
     os.makedirs(data_folder, exist_ok=True)
