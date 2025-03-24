@@ -12,14 +12,14 @@
 2. Click on Interactive Apps
 3. Click on VSCode Tunnel
 
-Account: class_cse576spring2025
-Partition: general
-QOS: class
-CPU Core Allocation: 32
-Memory Allocation: 84
-GPU Resources: gpu:a100:1
-VSCode Tunnel Wall Time: As per requirement (check time format. For hours format is HH:MM:SS->10:00:00)
-VSCode Instance: Primary
+-Account: class_cse576spring2025
+-Partition: general
+-QOS: class
+-CPU Core Allocation: 32
+-Memory Allocation: 84
+-GPU Resources: gpu:a100:1
+-VSCode Tunnel Wall Time: As per requirement (check time format. For hours format is HH:MM:SS->10:00:00)
+-VSCode Instance: Primary
 
 4. Click Launch
 
