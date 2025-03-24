@@ -5,6 +5,7 @@ import time
 from preprocess import Preprocess
 from model import GraniteModel
 import config
+import csv
 
 def main():
     """ Main execution logic """
@@ -23,6 +24,7 @@ def main():
         
         irr_prompt = row[config.irr_col_name]
         rel_prompt = row[config.rel_col_name]
+        answer = row[config.answer_col_name]
         
         print(f"\nProcessing Row {index + 1}...\n")
         
@@ -34,9 +36,9 @@ def main():
         print(f"Relevant Context Response:\n{response_rel}\n")
         
         # Compute similarity
-        similarity_score_rel = model.compute_similarity(response_rel, response_rel)
+        similarity_score_rel = model.compute_similarity(response_rel, answer)
         print(f"Cosine Similarity for Relevant Response: {similarity_score_rel}\n")
-        similarity_score_irr = model.compute_similarity(response_irr, response_rel)
+        similarity_score_irr = model.compute_similarity(response_irr, answer)
         print(f"Cosine Similarity for Irrelevant Response: {similarity_score_irr}\n")
 
 
@@ -51,6 +53,7 @@ def main():
                 "Model": config.model_path,
                 "Relevant Prompt": rel_prompt,
                 "Irrelevant Prompt": irr_prompt,
+                "Correct answer": answer,
                 "Relevant Response": response_rel,
                 "Irrelevant Response": response_irr,
                 "Cosine Similarity (Relevant)": similarity_score_rel,
@@ -69,13 +72,21 @@ def main():
     file_exists = os.path.exists(file_path)
 
     # Save to csv
-    with open(file_path, "w") as f:
+    with open(file_path, "a") as f:
         # if header does not exit, add one
-        if not file_exists or os.stat(file_path).st_size == 0:
-            f.write("Model, Relevant Prompt, Irrelevant Prompt, Relevant Response, Irrelevant Response, Cosine Similarity (Relevant), Cosine Similarity (Irrelevant), Execution Time\n")
-        for item in data_to_save:
-            f.write(f'{item["Model"]}, {item["Relevant Prompt"]}, {item["Irrelevant Prompt"]}, {item["Relevant Response"]}, {item["Irrelevant Response"]}, {item["Cosine Similarity (Relevant)"]}, {item["Cosine Similarity (Irrelevant)"]}, {item["Execution Time"]}\n')
-
+        writer = csv.DictWriter(f, fieldnames=[
+                "Model", 
+                "Relevant Prompt", 
+                "Irrelevant Prompt", 
+                "Correct answer",
+                "Relevant Response", 
+                "Irrelevant Response", 
+                "Cosine Similarity (Relevant)", 
+                "Cosine Similarity (Irrelevant)", 
+                "Execution Time"
+            ])        # Write the header only once
+        writer.writeheader()
+        writer.writerows(data_to_save)
     # Calculate and print total execution time
     total_end_time = time.time()
     total_time = total_end_time - total_start_time

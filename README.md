@@ -42,3 +42,7 @@ VSCode Instance: Primary
 **Note:** 
 1. Make sure to create the virtual environment with `python3.11` as some dependencies might fail with old versions.
 2. Make sure to run executables such as pip, python, etc. from the `venv/bin` For windows: `./venv/bin/python main/app.py`
+
+
+**Another note:**
+Go to config.py and change the model name if wanting to use a different model - read through model.py to see requirements
