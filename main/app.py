@@ -37,7 +37,7 @@ def main():
         similarity_score_rel = model.compute_similarity(response_rel, response_rel)
         print(f"Cosine Similarity for Relevant Response: {similarity_score_rel}\n")
         similarity_score_irr = model.compute_similarity(response_irr, response_rel)
-        print(f"Cosine Similarity for Relevant Response: {similarity_score_irr}\n")
+        print(f"Cosine Similarity for Irrelevant Response: {similarity_score_irr}\n")
 
 
         # Calculate and print time taken for this row
@@ -59,11 +59,17 @@ def main():
             }
         )
 
-    file_path = "output.csv"
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    data_folder = os.path.join(project_root, "main/data")
+    file_path = os.path.join(data_folder, "output.csv")
+
+    # Ensure the data folder exists
+    os.makedirs(data_folder, exist_ok=True)
+
     file_exists = os.path.exists(file_path)
 
     # Save to csv
-    with open("output.csv", "w") as f:
+    with open(file_path, "w") as f:
         # if header does not exit, add one
         if not file_exists or os.stat(file_path).st_size == 0:
             f.write("Model, Relevant Prompt, Irrelevant Prompt, Relevant Response, Irrelevant Response, Cosine Similarity (Relevant), Cosine Similarity (Irrelevant), Execution Time\n")
