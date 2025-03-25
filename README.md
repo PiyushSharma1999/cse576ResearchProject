@@ -1,5 +1,9 @@
 # cse576ResearchProject
 
+Branch naming convention
+asurite/task-name
+ex: nsano1/initial-draft
+
 ## How to run the project
 
 1. Create a python virtual environment with the command `python3.11 -m venv venv`
