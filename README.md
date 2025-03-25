@@ -39,6 +39,26 @@ VSCode Instance: Primary
 11. Run `nvcc --version` to check if cuda is loaded
 12. Run `module load gcc-13.2.0-gcc-12.1.0`
 
+## Hugging face CL guide
+1. Click profile picture on hugging face
+2. Go to “access tokens”
+3. Create new token
+4. Name it anything
+5. Check “Read access to contents of all repos under your personal namespace”
+6. In repositories permissions add the wanted model names in “search for repos”
+7. Check “Read access to contents of selected repos”
+8. Create token
+9. Save the token somewhere safe
+10. For models like Mistal AI, go back to the original models page and accept a term in order to fully be granted access. For other models, also go back to the original model page, submit an access request, and it must be reviewed before access is fully granted. 
+11. Make sure you are in the virtual environment “source ./venv/bin/activate”
+12. Run“huggingface-cli login” 
+13. Copy and paste the token when asked.
+14. Now, in the project terminal do the following installations
+15. pip install protobuf
+16. pip install sentencepiece
+17. Now you should be able to add the hugging face model and utilize it.
+
+
 **Note:** 
 1. Make sure to create the virtual environment with `python3.11` as some dependencies might fail with old versions.
 2. Make sure to run executables such as pip, python, etc. from the `venv/bin` For windows: `./venv/bin/python main/app.py`

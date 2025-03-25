@@ -16,7 +16,12 @@ def main():
     preprocessor.display_data()
     data = preprocessor.get_columns()
 
+    #Mistral AI and meta-llama need the Hugging face cl login to work
     models = [
+        "mistralai/Mistral-7B-Instruct-v0.3",
+        "HumanLLMs/Human-Like-Qwen2.5-7B-Instruct",
+        "meta-llama/Llama-3.1-8B-Instruct",
+        "Qwen/Qwen2.5-7B-Instruct",
         "ibm-granite/granite-3.2-8b-instruct",
         "tiiuae/falcon-7b-instruct",
     ]
@@ -25,6 +30,7 @@ def main():
     for model_name in models:
 
         model = GraniteModel(model_name) # todo - rename
+        print("loaded model: " + model_name)
         for index, row in data.iterrows():
             row_start_time = time.time()  # Start timer for this row
             
@@ -70,7 +76,7 @@ def main():
 
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     data_folder = os.path.join(project_root, "main/data")
-    file_path = os.path.join(data_folder, "output.csv")
+    file_path = os.path.join(data_folder, "output_asrakm.csv")
 
     # Ensure the data folder exists
     os.makedirs(data_folder, exist_ok=True)
