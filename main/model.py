@@ -7,14 +7,25 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
 class GraniteModel:
-    def __init__(self):
-        """ Load the Granite model and tokenizer """
-        self.model = AutoModelForCausalLM.from_pretrained(
-            config.model_path,
-            device_map=config.device,
-            torch_dtype=torch.bfloat16,
-        )
-        self.tokenizer = AutoTokenizer.from_pretrained(config.model_path)
+    def __init__(self, model_name):
+
+        if "granite" in model_name or "falcom" in model_name:
+            """ Load the Granite model and tokenizer """
+            self.model_name = model_name
+            self.model = AutoModelForCausalLM.from_pretrained(
+                config.model_path,
+                device_map=config.device,
+                torch_dtype=torch.bfloat16,
+            )
+            self.tokenizer = AutoTokenizer.from_pretrained(config.model_path)
+            self.sbert_model = SentenceTransformer('all-MiniLM-L6-v2')
+        else:
+            self.model = AutoModelForCausalLM.from_pretrained(
+                model_name,
+                device_map=config.device
+            )
+            self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        
         self.sbert_model = SentenceTransformer('all-MiniLM-L6-v2')
 
     def generate_response(self, prompt):
