@@ -8,7 +8,7 @@ ex: nsano1/initial-draft
 
 1. Create a python virtual environment with the command `python3.11 -m venv venv`
 2. Run the command to install requirements `pip install -r requirements.txt` For windows: `./venv/bin/pip install -r requirements.txt`
-3. Run `app.py`
+3. Run `app.py` For windows: ./venv/bin/python main/app.py
 
 ## SOL Guide
 
