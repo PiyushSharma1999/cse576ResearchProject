@@ -33,30 +33,24 @@ def main():
         print("loaded model: " + model_name)
         for index, row in data.iterrows():
             row_start_time = time.time()  # Start timer for this row
+
+            print(f"\nProcessing Model: {model_name}, Prompt {index + 1}...")
             
             rel_prompt = row[config.rel_col_name]
             irr_prompt = row[config.irr_col_name]
             irr_ask_prompt = row[config.irr_ask_col_name]
             irr_context = row[config.irr_context_col]
             answer = row[config.answer_col_name]
-            
-            print(f"\nProcessing Row {index + 1}...\n")
-            
+                        
             # Generate model responses
             response_irr = model.generate_response(irr_prompt)
             response_rel = model.generate_response(rel_prompt)
             response_irr_context = model.generate_response(irr_ask_prompt)
-            
-            print(f"Irrelevant Context Response:\n{response_irr}\n")
-            print(f"Relevant Context Response:\n{response_rel}\n")
-            
+                        
             # Compute similarity
             similarity_score_rel = model.compute_similarity(response_rel, answer)
-            print(f"Cosine Similarity for Relevant Response: {similarity_score_rel}\n")
             similarity_score_irr = model.compute_similarity(response_irr, answer)
-            print(f"Cosine Similarity for Irrelevant Response: {similarity_score_irr}\n")
             similarity_score_irr_context = model.compute_similarity(response_irr_context, irr_context)
-            print(f"Cosine Similarity for Identify Irrelevant Context Response: {similarity_score_irr_context}\n")
 
             # Calculate and print time taken for this row
             row_end_time = time.time()
@@ -66,7 +60,7 @@ def main():
             # Save data
             data_to_save.append(
                 {
-                    "Model": config.model_path,
+                    "Model": model_name,
                     "Relevant Prompt": rel_prompt,
                     "Irrelevant Prompt": irr_prompt,
                     "Identify Irrelevant Context Prompt": irr_ask_prompt,

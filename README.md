@@ -4,6 +4,8 @@ Branch naming convention
 asurite/task-name
 ex: nsano1/initial-draft
 
+Miro Link: https://miro.com/app/board/uXjVIPPvthk=/
+
 ## How to run the project
 
 1. Create a python virtual environment with the command `python3.11 -m venv venv`
