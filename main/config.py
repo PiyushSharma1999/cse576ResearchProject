@@ -1,4 +1,4 @@
-file_path = "data/input_file.csv"
+file_path = "data/generated_input_file.csv"
 irr_col_name = "Prompt with irrelevant context"
 irr_ask_col_name = "Prompt with irrelevant context and asking for irrelevant context"
 irr_context_col = "Irrelevant context"
