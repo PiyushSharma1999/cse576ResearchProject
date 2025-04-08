@@ -26,7 +26,7 @@ def main():
         # "tiiuae/falcon-7b-instruct", # done
         # "open-r1/OlympicCoder-7B",
         # "HuggingFaceH4/zephyr-7b-beta" # done
-        "deepseek-ai/deepseek-llm-7b-chat", # todo
+        # "deepseek-ai/deepseek-llm-7b-chat", # done
         # "Qwen/Qwen2-7B-Chat",
         # "mosaicml/mpt-7b-instruct" # needs its own model loader
     ]
@@ -36,6 +36,7 @@ def main():
 
         model = GraniteModel(model_name) # todo - rename
         print("loaded model: " + model_name)
+
         for index, row in data.iterrows():
             row_start_time = time.time()  # Start timer for this row
 
