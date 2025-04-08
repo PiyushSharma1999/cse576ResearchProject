@@ -18,12 +18,17 @@ def main():
 
     #Mistral AI and meta-llama need the Hugging face cl login to work
     models = [
-        # "mistralai/Mistral-7B-Instruct-v0.3",
-        "HumanLLMs/Human-Like-Qwen2.5-7B-Instruct",
+        # "mistralai/Mistral-7B-Instruct-v0.3", # requires requested access
+        # "HumanLLMs/Human-Like-Qwen2.5-7B-Instruct", # done
         # "meta-llama/Llama-3.1-8B-Instruct",
-        "Qwen/Qwen2.5-7B-Instruct",
-        "ibm-granite/granite-3.2-8b-instruct",
-        "tiiuae/falcon-7b-instruct",
+        # "Qwen/Qwen2.5-7B-Instruct", # done
+        # "ibm-granite/granite-3.2-8b-instruct", # done
+        # "tiiuae/falcon-7b-instruct", # done
+        # "open-r1/OlympicCoder-7B",
+        # "HuggingFaceH4/zephyr-7b-beta" # done
+        "deepseek-ai/deepseek-llm-7b-chat", # todo
+        # "Qwen/Qwen2-7B-Chat",
+        "mosaicml/mpt-7b-instruct" # todo
     ]
 
     data_to_save = []
