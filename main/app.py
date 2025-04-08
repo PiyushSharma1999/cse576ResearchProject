@@ -28,7 +28,7 @@ def main():
         # "HuggingFaceH4/zephyr-7b-beta" # done
         "deepseek-ai/deepseek-llm-7b-chat", # todo
         # "Qwen/Qwen2-7B-Chat",
-        "mosaicml/mpt-7b-instruct" # todo
+        # "mosaicml/mpt-7b-instruct" # needs its own model loader
     ]
 
     data_to_save = []
