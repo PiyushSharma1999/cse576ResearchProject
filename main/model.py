@@ -11,7 +11,7 @@ class GraniteModel:
 
         if "granite" in model_name or "falcom" in model_name or "Qwen2" in model_name or "Mistral" in model_name or "Llama" in model_name or "Human" in model_name or "aya" in model_name or "gemma" in model_name or "DeepSeek" in model_name or "Qwerky" in model_name:
             """ Load the Granite model and tokenizer """
-            print(model_name)
+            print(f"Loading custom model: {model_name}")
             self.model_name = model_name
             if("Llama" in model_name):
                 self.model = AutoModelForCausalLM.from_pretrained(

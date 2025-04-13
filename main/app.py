@@ -8,6 +8,7 @@ import config
 import csv
 from io import StringIO
 import torch
+import pandas as pd
 
 def generate_prompts(model_name):
     llamaPrompt = '''create 30 prompts in either the general knowledge domain or fictional story domain and ask a question about the prompt. Include 1-2 lines of irrelevant context, which should be relevant to the information in the prompt but have no impact on the solution to the question asked. The irrelevant context, when included, should be able to distract a small LLM trained on around 7 billion parameter. Create the prompt in the following CSV format, ensure no commas are in the response or add the correct punctuation for it to be acceptable in the CSV format. Respond with only the CSV prompt.
@@ -20,7 +21,7 @@ def generate_prompts(model_name):
     print("generating prompts")
 
     # will generate the input data
-    llamaModel = GraniteModel(llamaModelName)
+    llamaModel = GraniteModel(model_name)
     response_csv = llamaModel.generate_response(llamaPrompt)
     
     # Wrap it in StringIO so csv.DictReader can parse it like a file
@@ -133,7 +134,7 @@ def process_models(data):
     return data_to_save
 
 
-def evaluate_responses(data_to_save):
+def evaluate_responses(data_to_save, llamaModelName):
     llama70b = GraniteModel(llamaModelName)
 
     data_passed = []
@@ -326,24 +327,6 @@ def save_results(data_passed, data_not_passed, data_identified_correctly, data_i
 
     file_exists = os.path.exists(combined_path)
     # Save the output to a csv
-    with open(combined_path, "a", newline='') as f:
-        # if header does not exit, add one
-        writer = csv.DictWriter(f, fieldnames=[
-                "Model", 
-                "Relevant Prompt", 
-                "Irrelevant Prompt", 
-                "Identify Irrelevant Context Prompt",
-                "Irrelevant Context",
-                "Correct answer",
-                "Relevant Response", 
-                "Irrelevant Response", 
-                "Identify Irrelevant Context Response",
-                "Tricked",
-                "Identified"
-            ])        # Write the header only once
-        if not file_exists:
-            writer.writeheader()
-        writer.writerows(data_combined)
 
     print("Finished saving results to CSV files")
 
@@ -354,25 +337,57 @@ def main():
     total_start_time = time.time()
     llamaModelName = "meta-llama/Llama-3.3-70B-Instruct" 
 
-    #will use the deepseep v2 model to create an initial dataset to test
-    torch.cuda.empty_cache()
-    #llamaModelName = "meta-llama/Llama-3.3-70B-Instruct" 
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    data_folder = os.path.join(project_root, "main/data")
+    input_file_path = os.path.join(data_folder, "input_file.csv")
+    output_file_path = os.path.join(data_folder, "output_file.csv")
+
+
+    if os.path.exists(input_file_path) and os.path.getsize(input_file_path) > 0:
+        print(f"{input_file_path} found and is not empty, loading data...")
+
+        if os.path.exists(output_file_path) and os.path.getsize(output_file_path) > 0:
+            print(f"{output_file_path} found and is not empty, loading data...")
+
+            # output exists, just evaluate and save
+            data_to_save = pd.read_csv(output_file_path).to_dict(orient="records")
+            data_passed, data_not_passed, data_identified_correctly, data_identified_incorrectly, data_combined = evaluate_responses(data_to_save, llamaModelName)
+            save_results(data_passed, data_not_passed, data_identified_correctly, data_identified_incorrectly, data_combined)
+
+            del llama70b
+            torch.cuda.empty_cache()
+
+            total_end_time = time.time()
+            total_time = total_end_time - total_start_time
+            print(f"Total Execution Time: {total_time:.2f} seconds")
+
+            return
+        else:
+            preprocessor = Preprocess(file_name=input_file_path)
+            data = preprocessor.get_columns()
+    else:
+        print(f"{input_file_path} not found or is empty, generating data...")
+
+        #will use the deepseep v2 model to create an initial dataset to test
+        torch.cuda.empty_cache()
+        #llamaModelName = "meta-llama/Llama-3.3-70B-Instruct" 
+        
+        # Generate input prompts 
+        input_prompts_csv = generate_prompts(llamaModelName)
+
+        # Save the generated prompts to a CSV file
+        save_input_prompts_to_csv(input_prompts_csv)
+
+        #will delete the model and free up the cache
+        del llamaModel
+        torch.cuda.empty_cache()
+
+        # Load and display data
+        preprocessor = Preprocess(file_name="generated_input_file.csv")
+        preprocessor.display_data()
+        data = preprocessor.get_columns()
+
     
-    # Generate input prompts 
-    input_prompts_csv = generate_prompts(model_name)
-
-    # Save the generated prompts to a CSV file
-    save_input_prompts_to_csv(input_prompts_csv)
-
-    #will delete the model and free up the cache
-    del llamaModel
-    torch.cuda.empty_cache()
-
-   
-    # Load and display data
-    preprocessor = Preprocess()
-    preprocessor.display_data()
-    data = preprocessor.get_columns()
 
     
     # Process models and generate responses
@@ -380,7 +395,7 @@ def main():
 
 
     # Evaluate responses
-    data_passed, data_not_passed, data_identified_correctly, data_identified_incorrectly, data_combined = evaluate_responses(data_to_save)
+    data_passed, data_not_passed, data_identified_correctly, data_identified_incorrectly, data_combined = evaluate_responses(data_to_save, llamaModelName)
         
 
     # Save results to CSV files
