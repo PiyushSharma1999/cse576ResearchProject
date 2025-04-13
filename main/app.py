@@ -138,62 +138,110 @@ def evaluate_responses(data_to_save):
 
     data_passed = []
     data_not_passed = []
+    data_identified_correctly = []
+    data_identified_incorrectly = []
+
+    # this will have two additional propertites, tricked and identified correctly
+    data_combined = []
 
     for row in data_to_save:
+        to_add = row.copy()
+
         # Retrieve the correct answer and irrelevant response from the row
         prompt = row["Relevant Prompt"]
         irr_prompt = row["Irrelevant Prompt"]
+        irr_ask_prompt = row["Identify Irrelevant Context Prompt"]
         irr_context = row["Irrelevant Context"]
         correct_answer = row["Correct answer"]
         response_rel = row["Relevant Response"]
         response_irr = row["Irrelevant Response"]
-        
-        #prompt to compare correct answer with the llms relevant response
-        comparisonPrompt = (
-            f"Are both the following two responses correct in relation to the prompt: {prompt}. Respond with only YES or NO. "
-            f"Response 1: Answer is {correct_answer}. Response 2: {response_rel}"
-        )
+        response_irr_context = row["Identify Irrelevant Context Response"]
 
-        #generates response then strips and lower()
-        rel_comparison = llama70b.generate_response(comparisonPrompt)
-        rel_comparison = rel_comparison.strip().lower()
+        # check if llm got relevant response correct
+        rel_comparison = compare_relevant_responses(prompt, correct_answer, response_rel)
+        # check if llm got irrelevant response correct
+        irr_comparison = compare_irrelevant_responses(irr_prompt, correct_answer, response_irr)
 
-        #check if llm got the correct answer with relevant information
-        if rel_comparison == "yes" or rel_comparison == "yes.":
-            #prompt to compare correct answer with irrelevant response
-            comparisonPrompt = (
-                f"Is the following response correct in relation to the prompt: {prompt} and the correct answer to the prompt {correct_answer}. Respond with only YES or NO. "
-                f"Response: {response_irr}"
-            )
-
-            comparisonPrompt2 = (
-                f"For the prompt: {prompt}, this is the correct answer {correct_answer}. This is the irrelevant context that was included in the prompt: {irr_context}. If the following response answer correctly, respond only with NO. If the following response got the answer wrong, did it get it wrong because of the irrelevant context included? Respond with only YES or NO. "
-                f"Response: {response_irr}"
-            )
-
-            #generates response then strips and lower()
-            irrel_comparison = llama70b.generate_response(comparisonPrompt2)
-            irrel_comparison = irrel_comparison.strip().lower()
-
-            #add to data_passed if LLM answer incorrectly with irrelevant info, add to data_not_passed if it answered correctly
-            if irrel_comparison == "yes" or irrel_comparison == "yes.":
-                data_passed.append(row)
-            else:
-                data_not_passed.append(row)
-
+        # if it got tricked, consider it passed
+        if rel_comparison == "yes" and irr_comparison == "yes":
+            data_passed.append(row)
+            to_add["Tricked"] = "yes"
         #will add to the not passed data if not
         else:
             data_not_passed.append(row)
+            to_add["Tricked"] = "no"
+
+        
+        # check if llm identified the irrelevant context correctly
+        identified_comparison = compare_identified_responses(irr_ask_prompt, irr_context, response_irr_context)
+        # if it identified correctly add to the identified data
+        if identified_comparison == "yes":
+            data_identified_correctly.append(row)
+            to_add["Identified"] = "yes"
+        else:
+            data_identified_incorrectly.append(row)
+            to_add["Identified"] = "no"
+
+        # ad to grand total
+        data_combined.append(to_add)
+
+    print("Finished evaluating responses", "", len(data_passed), "passed and", len(data_not_passed), "not passed", "", len(data_identified_correctly), "identified correctly", "", len(data_identified_incorrectly), "identified incorrectly")
     
-    return data_passed, data_not_passed
+    return data_passed, data_not_passed, data_identified_correctly, data_identified_incorrectly, data_combined
 
 
-def save_results(data_passed, data_not_passed):
+def compare_relevant_responses(prompt, correct_answer, response):
+    # Prompt to compare correct answer with the LLM's relevant response
+    comparisonPrompt = (
+        f"Is the following response correct in relation to the prompt: {prompt} and the correct answer to the prompt {correct_answer}. Respond with only YES or NO. "
+        f"Response: {response}"
+    )
+
+    # Generate response then strip and lower()
+    result = llama70b.generate_response(comparisonPrompt)
+    result = result.strip().lower().rstrip('.')
+
+    return result
+
+    
+def compare_irrelevant_responses(prompt, correct_answer, response, irr_context):
+    # Prompt to compare correct answer with the LLM's relevant response
+    comparisonPrompt = (
+        f"For the prompt: {prompt}, this is the correct answer {correct_answer}. This is the irrelevant context that was included in the prompt: {irr_context}. If the following response answer correctly, respond only with NO. If the following response got the answer wrong, did it get it wrong because of the irrelevant context included? Respond with only YES or NO. "
+        f"Response: {response_irr}"
+    )
+
+    # Generate response then strip and lower()
+    result = llama70b.generate_response(comparisonPrompt)
+    result = result.strip().lower().rstrip('.')
+
+    return result
+    
+
+def compare_identified_responses(irr_ask_prompt, irr_context, response_irr_context):
+    # Prompt to compare correct answer with the LLM's relevant response
+    comparisonPrompt = (
+        f"For the prompt: {irr_ask_prompt}, this is the irrelevant context that was included in the prompt: {irr_context}. If the following response identifies the irrelevant context correctly, respond only with YES. If the following response does not identify the irrelevant context correctly, respond with NO. "
+        f"Response: {response_irr_context}"
+    )
+
+    # Generate response then strip and lower()
+    result = llama70b.generate_response(comparisonPrompt)
+    result = result.strip().lower().rstrip('.')
+
+    return result
+
+
+def save_results(data_passed, data_not_passed, data_identified_correctly, data_identified_incorrectly, data_combined):
     #find the ouput csv file route
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     data_folder = os.path.join(project_root, "main/data")
     file_path_passed = os.path.join(data_folder, "output_passed_file.csv")
     file_path_not_passed = os.path.join(data_folder, "output_not_passed_file.csv")
+    file_path_identified_correctly = os.path.join(data_folder, "output_identified_correctly_file.csv")
+    file_path_identified_incorrectly = os.path.join(data_folder, "output_identified_incorrectly_file.csv")
+
+    combined_path = os.path.join(data_folder, "combined_output_file.csv")
 
     # Ensure the data folder exists
     os.makedirs(data_folder, exist_ok=True)
@@ -238,6 +286,67 @@ def save_results(data_passed, data_not_passed):
             writer.writeheader()
         writer.writerows(data_not_passed)
 
+    file_exists = os.path.exists(file_path_identified_correctly)
+    # Save the output to a csv
+    with open(file_path_identified_correctly, "a", newline='') as f:
+        # if header does not exit, add one
+        writer = csv.DictWriter(f, fieldnames=[
+                "Model", 
+                "Relevant Prompt", 
+                "Irrelevant Prompt", 
+                "Identify Irrelevant Context Prompt",
+                "Irrelevant Context",
+                "Correct answer",
+                "Relevant Response", 
+                "Irrelevant Response", 
+                "Identify Irrelevant Context Response"
+            ])        # Write the header only once
+        if not file_exists:
+            writer.writeheader()
+        writer.writerows(data_identified_correctly)
+
+    file_exists = os.path.exists(file_path_identified_incorrectly)
+    # Save the output to a csv
+    with open(file_path_identified_incorrectly, "a", newline='') as f:
+        # if header does not exit, add one
+        writer = csv.DictWriter(f, fieldnames=[
+                "Model", 
+                "Relevant Prompt", 
+                "Irrelevant Prompt", 
+                "Identify Irrelevant Context Prompt",
+                "Irrelevant Context",
+                "Correct answer",
+                "Relevant Response", 
+                "Irrelevant Response", 
+                "Identify Irrelevant Context Response"
+            ])        # Write the header only once
+        if not file_exists:
+            writer.writeheader()
+        writer.writerows(data_identified_incorrectly)
+
+    file_exists = os.path.exists(combined_path)
+    # Save the output to a csv
+    with open(combined_path, "a", newline='') as f:
+        # if header does not exit, add one
+        writer = csv.DictWriter(f, fieldnames=[
+                "Model", 
+                "Relevant Prompt", 
+                "Irrelevant Prompt", 
+                "Identify Irrelevant Context Prompt",
+                "Irrelevant Context",
+                "Correct answer",
+                "Relevant Response", 
+                "Irrelevant Response", 
+                "Identify Irrelevant Context Response",
+                "Tricked",
+                "Identified"
+            ])        # Write the header only once
+        if not file_exists:
+            writer.writeheader()
+        writer.writerows(data_combined)
+
+    print("Finished saving results to CSV files")
+
 
 
 def main():
@@ -271,12 +380,12 @@ def main():
 
 
     # Evaluate responses
-    data_passed, data_not_passed = evaluate_responses(data_to_save)
+    data_passed, data_not_passed, data_identified_correctly, data_identified_incorrectly, data_combined = evaluate_responses(data_to_save)
         
 
     # Save results to CSV files
-    save_results(data_passed, data_not_passed)
-    
+    save_results(data_passed, data_not_passed, data_identified_correctly, data_identified_incorrectly, data_combined)
+
     
     # Clear the model to free memory
     del llama70b
