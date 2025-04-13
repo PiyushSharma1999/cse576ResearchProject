@@ -9,20 +9,13 @@ import csv
 from io import StringIO
 import torch
 
-def main():
-    """ Main execution logic """
-    total_start_time = time.time()
-    llamaModelName = "meta-llama/Llama-3.3-70B-Instruct" 
-
-    #will use the deepseep v2 model to create an initial dataset to test
-    torch.cuda.empty_cache()
-    #llamaModelName = "meta-llama/Llama-3.3-70B-Instruct" 
+def generate_prompts(model_name):
     llamaPrompt = '''create 30 prompts in either the general knowledge domain or fictional story domain and ask a question about the prompt. Include 1-2 lines of irrelevant context, which should be relevant to the information in the prompt but have no impact on the solution to the question asked. The irrelevant context, when included, should be able to distract a small LLM trained on around 7 billion parameter. Create the prompt in the following CSV format, ensure no commas are in the response or add the correct punctuation for it to be acceptable in the CSV format. Respond with only the CSV prompt.
-Prompt without irrelevant context,Prompt with irrelevant context,Prompt with irrelevant context and asking for irrelevant context,Irrelevant context,Correct answer
+    Prompt without irrelevant context,Prompt with irrelevant context,Prompt with irrelevant context and asking for irrelevant context,Irrelevant context,Correct answer
 
-Some examples below
-"Four people (A=1min, B=2min, C=5min, D=10min) must cross a bridge at night. The bridge holds max 2 people. They have one flashlight. How do all cross in 17 minutes?","Four individuals (A=1min [vegan], B=2min [left-handed], C=5min [allergic to nuts], D=10min [former Olympian]) must cross a suspension bridge (built 1937, max load 300lbs) at 02:00hrs during a storm (winds 25mph). The bridge (inspected monthly per DOT regs) holds max 2 people. They share a Maglite XL50 (3xAAA batteries at 78% charge). How do all cross in 17 minutes while complying with OSHA safety standards?","Identify the irrelevant context in the prompt: ""Four individuals (A=1min [vegan], B=2min [left-handed], C=5min [allergic to nuts], D=10min [former Olympian]) must cross a suspension bridge (built 1937, max load 300lbs) at 02:00hrs during a storm (winds 25mph). The bridge (inspected monthly per DOT regs) holds max 2 people. They share a Maglite XL50 (3xAAA batteries at 78% charge). How do all cross in 17 minutes while complying with OSHA safety standards?""","vegan.left-handed.allergic to nuts.former Olympian. (built 1937, max load 300lbs) at 02:00hrs during a storm (winds 25mph).(inspected monthly per DOT regs). They share a Maglite XL50 (3xAAA batteries at 78% charge) while complying with OSHA safety standards",1. A+B cross (2min). 2. A returns (1min). 3. C+D cross (10min). 4. B returns (2min). 5. A+B cross (2min). Total: 17 minutes
-"In the story, Sarah discovers a hidden door in her attic that leads to a magical forest. What does Sarah find in the attic?","In the story, Sarah discovers a hidden door in her attic that leads to a magical forest. Sarah's grandmother had told her stories about enchanted realms when she was younger. The magical forest is known for its talking animals and ever-changing seasons. What does Sarah find in the attic?","Identify the irrelevant context in the prompt: ""In the story, Sarah discovers a hidden door in her attic that leads to a magical forest. Sarah's grandmother had told her stories about enchanted realms when she was younger. The magical forest is known for its talking animals and ever-changing seasons. What does Sarah find in the attic?""",Sarah's grandmother’s stories about enchanted realms.,Sarah finds a hidden door in the attic that leads to a magical forest.'''
+    Some examples below
+    "Four people (A=1min, B=2min, C=5min, D=10min) must cross a bridge at night. The bridge holds max 2 people. They have one flashlight. How do all cross in 17 minutes?","Four individuals (A=1min [vegan], B=2min [left-handed], C=5min [allergic to nuts], D=10min [former Olympian]) must cross a suspension bridge (built 1937, max load 300lbs) at 02:00hrs during a storm (winds 25mph). The bridge (inspected monthly per DOT regs) holds max 2 people. They share a Maglite XL50 (3xAAA batteries at 78% charge). How do all cross in 17 minutes while complying with OSHA safety standards?","Identify the irrelevant context in the prompt: ""Four individuals (A=1min [vegan], B=2min [left-handed], C=5min [allergic to nuts], D=10min [former Olympian]) must cross a suspension bridge (built 1937, max load 300lbs) at 02:00hrs during a storm (winds 25mph). The bridge (inspected monthly per DOT regs) holds max 2 people. They share a Maglite XL50 (3xAAA batteries at 78% charge). How do all cross in 17 minutes while complying with OSHA safety standards?""","vegan.left-handed.allergic to nuts.former Olympian. (built 1937, max load 300lbs) at 02:00hrs during a storm (winds 25mph).(inspected monthly per DOT regs). They share a Maglite XL50 (3xAAA batteries at 78% charge) while complying with OSHA safety standards",1. A+B cross (2min). 2. A returns (1min). 3. C+D cross (10min). 4. B returns (2min). 5. A+B cross (2min). Total: 17 minutes
+    "In the story, Sarah discovers a hidden door in her attic that leads to a magical forest. What does Sarah find in the attic?","In the story, Sarah discovers a hidden door in her attic that leads to a magical forest. Sarah's grandmother had told her stories about enchanted realms when she was younger. The magical forest is known for its talking animals and ever-changing seasons. What does Sarah find in the attic?","Identify the irrelevant context in the prompt: ""In the story, Sarah discovers a hidden door in her attic that leads to a magical forest. Sarah's grandmother had told her stories about enchanted realms when she was younger. The magical forest is known for its talking animals and ever-changing seasons. What does Sarah find in the attic?""",Sarah's grandmother’s stories about enchanted realms.,Sarah finds a hidden door in the attic that leads to a magical forest.'''
 
     print("generating prompts")
 
@@ -33,7 +26,12 @@ Some examples below
     # Wrap it in StringIO so csv.DictReader can parse it like a file
     csvfile = StringIO(response_csv)
 
-    # Define headers in the same order as the columns in the CSV
+    print("Finished generating responses")
+    return csvfile
+
+
+def save_input_prompts_to_csv(csvfile):
+    """Save the generated prompts to a CSV file."""
     fieldnames = [
         "Prompt without irrelevant context", 
         "Prompt with irrelevant context", 
@@ -42,44 +40,27 @@ Some examples below
         "Correct answer"
     ]
 
-    # Read the CSV string into list of dictionaries
     reader = csv.DictReader(csvfile, fieldnames=fieldnames)
     data_to_save = list(reader)
-    
+
+    # Define file paths
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     data_folder = os.path.join(project_root, "main/data")
     file_path = os.path.join(data_folder, "generated_input_file.csv")
 
     # Ensure the data folder exists
     os.makedirs(data_folder, exist_ok=True)
-    file_exists = os.path.exists(file_path)
 
-    # Save the iput data to a csv file
+    # Save the input data to a CSV file
+    file_exists = os.path.exists(file_path)
     with open(file_path, "a") as f:
-        # if header does not exit, add one
-        writer = csv.DictWriter(f, fieldnames=[
-                "Prompt without irrelevant context", 
-                "Prompt with irrelevant context", 
-                "Prompt with irrelevant context and asking for irrelevant context", 
-                "Irrelevant context",
-                "Correct answer"
-            ])  # Write the header only once
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
         if not file_exists:
             writer.writeheader()
         writer.writerows(data_to_save)
 
-        #will delete the model and free up the cache
-        del llamaModel
-        torch.cuda.empty_cache()
 
-        print("finished generating responses")
-
-   
-    # Load and display data
-    preprocessor = Preprocess()
-    preprocessor.display_data()
-    data = preprocessor.get_columns()
-
+def process_models(data):
     #Mistral AI and meta-llama need the Hugging face cl login to work
     models = [
         "Qwen/Qwen2.5-7B-Instruct", 
@@ -149,6 +130,10 @@ Some examples below
         del model
         torch.cuda.empty_cache()
 
+    return data_to_save
+
+
+def evaluate_responses(data_to_save):
     llama70b = GraniteModel(llamaModelName)
 
     data_passed = []
@@ -199,8 +184,11 @@ Some examples below
         #will add to the not passed data if not
         else:
             data_not_passed.append(row)
-        
+    
+    return data_passed, data_not_passed
 
+
+def save_results(data_passed, data_not_passed):
     #find the ouput csv file route
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     data_folder = os.path.join(project_root, "main/data")
@@ -249,6 +237,46 @@ Some examples below
         if not file_exists:
             writer.writeheader()
         writer.writerows(data_not_passed)
+
+
+
+def main():
+    """ Main execution logic """
+    total_start_time = time.time()
+    llamaModelName = "meta-llama/Llama-3.3-70B-Instruct" 
+
+    #will use the deepseep v2 model to create an initial dataset to test
+    torch.cuda.empty_cache()
+    #llamaModelName = "meta-llama/Llama-3.3-70B-Instruct" 
+    
+    # Generate input prompts 
+    input_prompts_csv = generate_prompts(model_name)
+
+    # Save the generated prompts to a CSV file
+    save_input_prompts_to_csv(input_prompts_csv)
+
+    #will delete the model and free up the cache
+    del llamaModel
+    torch.cuda.empty_cache()
+
+   
+    # Load and display data
+    preprocessor = Preprocess()
+    preprocessor.display_data()
+    data = preprocessor.get_columns()
+
+    
+    # Process models and generate responses
+    data_to_save = process_models(data)
+
+
+    # Evaluate responses
+    data_passed, data_not_passed = evaluate_responses(data_to_save)
+        
+
+    # Save results to CSV files
+    save_results(data_passed, data_not_passed)
+    
     
     # Clear the model to free memory
     del llama70b
