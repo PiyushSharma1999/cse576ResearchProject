@@ -45,6 +45,11 @@ VSCode Instance: Primary
 11. Run `nvcc --version` to check if cuda is loaded
 12. Run `module load gcc-13.2.0-gcc-12.1.0`
 
+## Automating the pipeline
+1. If automating the process, when creating the sol tunnel mark Memory Allocation: 256, GPU Resources: gpu:a100:4, time can be 4 hours at most.
+2. When running the program, remove the previous input data from the  "generated_input_file.csv" (except for the first line of headers), to ensure the inputs are not being rerun.
+3. To automate the pipeline, you must get access to Llama70B. To do this, go to its main page a huggingface and follow the steps in the guide below for gaining access. 
+
 ## Hugging face CL guide
 1. Click profile picture on hugging face
 2. Go to “access tokens”
