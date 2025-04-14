@@ -267,7 +267,9 @@ def save_results(data_passed, data_not_passed, data_identified_correctly, data_i
                 "Correct answer",
                 "Relevant Response", 
                 "Irrelevant Response", 
-                "Identify Irrelevant Context Response"
+                "Identify Irrelevant Context Response",
+                "Tricked",
+                "Identified"
             ])        # Write the header only once
         if not file_exists:
             writer.writeheader()
@@ -287,7 +289,9 @@ def save_results(data_passed, data_not_passed, data_identified_correctly, data_i
                 "Correct answer",
                 "Relevant Response", 
                 "Irrelevant Response", 
-                "Identify Irrelevant Context Response"
+                "Identify Irrelevant Context Response",
+                "Tricked",
+                "Identified"
             ])        # Write the header only once
         if not file_exists:
             writer.writeheader()
@@ -306,7 +310,9 @@ def save_results(data_passed, data_not_passed, data_identified_correctly, data_i
                 "Correct answer",
                 "Relevant Response", 
                 "Irrelevant Response", 
-                "Identify Irrelevant Context Response"
+                "Identify Irrelevant Context Response",
+                "Tricked",
+                "Identified"
             ])        # Write the header only once
         if not file_exists:
             writer.writeheader()
@@ -325,7 +331,9 @@ def save_results(data_passed, data_not_passed, data_identified_correctly, data_i
                 "Correct answer",
                 "Relevant Response", 
                 "Irrelevant Response", 
-                "Identify Irrelevant Context Response"
+                "Identify Irrelevant Context Response",
+                "Tricked",
+                "Identified"
             ])        # Write the header only once
         if not file_exists:
             writer.writeheader()
@@ -333,6 +341,24 @@ def save_results(data_passed, data_not_passed, data_identified_correctly, data_i
 
     file_exists = os.path.exists(combined_path)
     # Save the output to a csv
+    with open(combined_path, "a", newline='') as f:
+        # if header does not exit, add one
+        writer = csv.DictWriter(f, fieldnames=[
+                "Model", 
+                "Relevant Prompt", 
+                "Irrelevant Prompt", 
+                "Identify Irrelevant Context Prompt",
+                "Irrelevant Context",
+                "Correct answer",
+                "Relevant Response", 
+                "Irrelevant Response", 
+                "Identify Irrelevant Context Response",
+                "Tricked",
+                "Identified"
+            ])        # Write the header only once
+        if not file_exists:
+            writer.writeheader()
+        writer.writerows(data_combined)
 
     print("Finished saving results to CSV files")
 
@@ -357,10 +383,10 @@ def main():
 
             # output exists, just evaluate and save
             data_to_save = pd.read_csv(output_file_path).to_dict(orient="records")
+            # data_to_save = data_to_save[0:1]  # Limit to first 10 rows for testing
             data_passed, data_not_passed, data_identified_correctly, data_identified_incorrectly, data_combined = evaluate_responses(data_to_save, llamaModelName)
             save_results(data_passed, data_not_passed, data_identified_correctly, data_identified_incorrectly, data_combined)
 
-            del llama70b
             torch.cuda.empty_cache()
 
             total_end_time = time.time()
