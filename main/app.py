@@ -9,9 +9,36 @@ import csv
 from io import StringIO
 import torch
 import pandas as pd
+import requests
 
-def generate_prompts(model_name, llamaModel):
-    llamaPrompt = '''create 30 prompts in either the general knowledge domain or fictional story domain and ask a question about the prompt. Include 1-2 lines of irrelevant context, which should be relevant to the information in the prompt but have no impact on the solution to the question asked. The irrelevant context, when included, should be able to distract a small LLM trained on around 7 billion parameter. Create the prompt in the following CSV format, ensure no commas are in the response or add the correct punctuation for it to be acceptable in the CSV format. Respond with only the CSV prompt.
+def generate_with_huggingface(model_name, prompt):
+    API_TOKEN = "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"
+    
+    headers = {
+        "Authorization": f"Bearer {API_TOKEN}",
+    }
+    
+    payload = {
+        "inputs": prompt,
+        "options": {"use_cache": False},
+    }
+    
+    # Make the API call
+    response = requests.post(
+        f"https://api-inference.huggingface.co/models/{model_name}",
+        headers=headers,
+        json=payload
+    )
+    
+    if response.status_code == 200:
+        return response.json()[0]['generated_text']  # Only return the generated text
+    else:
+        return f"Error: {response.status_code}, {response.text}"
+
+
+
+def generate_prompts():
+    llamaPrompt = '''create 30 prompts in either the general knowledge domain, programming, logical reasoning, or fictional story domain and ask a question about the prompt. Include 1-2 lines of irrelevant context, which should be relevant to the information in the prompt but have no impact on the solution to the question asked. The irrelevant context, when included, should be able to distract a small LLM trained on around 7 billion parameter. Create the prompt in the following CSV format, ensure no commas are in the response or add the correct punctuation for it to be acceptable in the CSV format. Respond with only the CSV prompt.
     Prompt without irrelevant context,Prompt with irrelevant context,Prompt with irrelevant context and asking for irrelevant context,Irrelevant context,Correct answer
 
     Some examples below
@@ -21,7 +48,7 @@ def generate_prompts(model_name, llamaModel):
     print("generating prompts")
 
     # will generate the input data
-    response_csv = llamaModel.generate_response(llamaPrompt)
+    response_csv = generate_with_huggingface(llamaPrompt)
     
     # Wrap it in StringIO so csv.DictReader can parse it like a file
     csvfile = StringIO(response_csv)
@@ -133,9 +160,7 @@ def process_models(data):
     return data_to_save
 
 
-def evaluate_responses(data_to_save, llamaModelName):
-    llama70b = GraniteModel(llamaModelName)
-
+def evaluate_responses(data_to_save, ):
     data_passed = []
     data_not_passed = []
     data_identified_correctly = []
@@ -158,11 +183,11 @@ def evaluate_responses(data_to_save, llamaModelName):
         response_irr_context = row["Identify Irrelevant Context Response"]
 
         # check if llm got relevant response correct
-        rel_comparison = compare_relevant_responses(prompt, correct_answer, response_rel, llama70b)
+        rel_comparison = compare_relevant_responses(prompt, correct_answer, response_rel)
 
         if  rel_comparison == "yes":
             # check if llm got irrelevant response correct
-            irr_comparison = compare_irrelevant_responses(irr_prompt, correct_answer, response_irr, irr_context, llama70b)
+            irr_comparison = compare_irrelevant_responses(irr_prompt, correct_answer, response_irr, irr_context)
             # if it got tricked, consider it passed
             if irr_comparison == "yes":
                 data_passed.append(row)
@@ -178,7 +203,7 @@ def evaluate_responses(data_to_save, llamaModelName):
 
         
         # check if llm identified the irrelevant context correctly
-        identified_comparison = compare_identified_responses(irr_ask_prompt, irr_context, response_irr_context, llama70b)
+        identified_comparison = compare_identified_responses(irr_ask_prompt, irr_context, response_irr_context)
         # if it identified correctly add to the identified data
         if identified_comparison == "yes":
             data_identified_correctly.append(row)
@@ -196,7 +221,7 @@ def evaluate_responses(data_to_save, llamaModelName):
     return data_passed, data_not_passed, data_identified_correctly, data_identified_incorrectly, data_combined
 
 
-def compare_relevant_responses(prompt, correct_answer, response, llama70b):
+def compare_relevant_responses(prompt, correct_answer, response):
     # Prompt to compare correct answer with the LLM's relevant response
     comparisonPrompt = (
         f"Is the following response correct in relation to the prompt: {prompt} and the correct answer to the prompt {correct_answer}. Respond with only YES or NO. "
@@ -204,13 +229,13 @@ def compare_relevant_responses(prompt, correct_answer, response, llama70b):
     )
 
     # Generate response then strip and lower()
-    result = llama70b.generate_response(comparisonPrompt)
+    result = generate_with_huggingface(comparisonPrompt)
     result = result.strip().lower().rstrip('.')
 
     return result
 
     
-def compare_irrelevant_responses(prompt, correct_answer, response, irr_context, llama70b):
+def compare_irrelevant_responses(prompt, correct_answer, response, irr_context):
     # Prompt to compare correct answer with the LLM's relevant response
     comparisonPrompt = (
         f"For the prompt: {prompt}, this is the correct answer {correct_answer}. This is the irrelevant context that was included in the prompt: {irr_context}. If the following response answer correctly, respond only with NO. If the following response got the answer wrong, did it get it wrong because of the irrelevant context included? Respond with only YES or NO. "
@@ -218,13 +243,13 @@ def compare_irrelevant_responses(prompt, correct_answer, response, irr_context, 
     )
 
     # Generate response then strip and lower()
-    result = llama70b.generate_response(comparisonPrompt)
+    result = generate_with_huggingface(comparisonPrompt)
     result = result.strip().lower().rstrip('.')
 
     return result
     
 
-def compare_identified_responses(irr_ask_prompt, irr_context, response_irr_context, llama70b):
+def compare_identified_responses(irr_ask_prompt, irr_context, response_irr_context):
     # Prompt to compare correct answer with the LLM's relevant response
     comparisonPrompt = (
         f"For the prompt: {irr_ask_prompt}, this is the irrelevant context that was included in the prompt: {irr_context}. If the following response identifies the irrelevant context correctly, respond only with YES. If the following response does not identify the irrelevant context correctly, respond with NO. "
@@ -232,7 +257,7 @@ def compare_identified_responses(irr_ask_prompt, irr_context, response_irr_conte
     )
 
     # Generate response then strip and lower()
-    result = llama70b.generate_response(comparisonPrompt)
+    result = generate_with_huggingface(comparisonPrompt)
     result = result.strip().lower().rstrip('.')
 
     return result
@@ -366,10 +391,6 @@ def save_results(data_passed, data_not_passed, data_identified_correctly, data_i
 def main():
     """ Main execution logic """
     total_start_time = time.time()
-    llamaModelName = "meta-llama/Llama-3.3-70B-Instruct" 
-
-    llamaModel = GraniteModel(llamaModelName)
-
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     data_folder = os.path.join(project_root, "main/data")
     input_file_path = os.path.join(data_folder, "input_file.csv")
@@ -384,8 +405,7 @@ def main():
 
             # output exists, just evaluate and save
             data_to_save = pd.read_csv(output_file_path).to_dict(orient="records")
-            # data_to_save = data_to_save[0:1]  # Limit to first 10 rows for testing
-            data_passed, data_not_passed, data_identified_correctly, data_identified_incorrectly, data_combined = evaluate_responses(data_to_save, llamaModelName)
+            data_passed, data_not_passed, data_identified_correctly, data_identified_incorrectly, data_combined = evaluate_responses(data_to_save)
             save_results(data_passed, data_not_passed, data_identified_correctly, data_identified_incorrectly, data_combined)
 
             torch.cuda.empty_cache()
@@ -400,20 +420,12 @@ def main():
             data = preprocessor.get_columns()
     else:
         print(f"{input_file_path} not found or is empty, generating data...")
-
-        #will use the deepseep v2 model to create an initial dataset to test
-        torch.cuda.empty_cache()
-        #llamaModelName = "meta-llama/Llama-3.3-70B-Instruct" 
         
         # Generate input prompts 
-        input_prompts_csv = generate_prompts(llamaModelName, llamaModel)
+        input_prompts_csv = generate_prompts()
 
         # Save the generated prompts to a CSV file
         save_input_prompts_to_csv(input_prompts_csv)
-
-        #will delete the model and free up the cache
-        del llamaModel
-        torch.cuda.empty_cache()
 
         # Load and display data
         preprocessor = Preprocess(file_name="generated_input_file.csv")
@@ -428,16 +440,12 @@ def main():
 
 
     # Evaluate responses
-    data_passed, data_not_passed, data_identified_correctly, data_identified_incorrectly, data_combined = evaluate_responses(data_to_save, llamaModelName)
+    data_passed, data_not_passed, data_identified_correctly, data_identified_incorrectly, data_combined = evaluate_responses(data_to_save)
         
 
     # Save results to CSV files
     save_results(data_passed, data_not_passed, data_identified_correctly, data_identified_incorrectly, data_combined)
 
-    
-    # Clear the model to free memory
-    del llama70b
-    torch.cuda.empty_cache()
 
     # Calculate and print total execution time
     total_end_time = time.time()
