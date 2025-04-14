@@ -10,7 +10,7 @@ from io import StringIO
 import torch
 import pandas as pd
 
-def generate_prompts(model_name):
+def generate_prompts(model_name, llamaModel):
     llamaPrompt = '''create 30 prompts in either the general knowledge domain or fictional story domain and ask a question about the prompt. Include 1-2 lines of irrelevant context, which should be relevant to the information in the prompt but have no impact on the solution to the question asked. The irrelevant context, when included, should be able to distract a small LLM trained on around 7 billion parameter. Create the prompt in the following CSV format, ensure no commas are in the response or add the correct punctuation for it to be acceptable in the CSV format. Respond with only the CSV prompt.
     Prompt without irrelevant context,Prompt with irrelevant context,Prompt with irrelevant context and asking for irrelevant context,Irrelevant context,Correct answer
 
@@ -21,7 +21,6 @@ def generate_prompts(model_name):
     print("generating prompts")
 
     # will generate the input data
-    llamaModel = GraniteModel(model_name)
     response_csv = llamaModel.generate_response(llamaPrompt)
     
     # Wrap it in StringIO so csv.DictReader can parse it like a file
@@ -369,6 +368,8 @@ def main():
     total_start_time = time.time()
     llamaModelName = "meta-llama/Llama-3.3-70B-Instruct" 
 
+    llamaModel = GraniteModel(llamaModelName)
+
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     data_folder = os.path.join(project_root, "main/data")
     input_file_path = os.path.join(data_folder, "input_file.csv")
@@ -405,7 +406,7 @@ def main():
         #llamaModelName = "meta-llama/Llama-3.3-70B-Instruct" 
         
         # Generate input prompts 
-        input_prompts_csv = generate_prompts(llamaModelName)
+        input_prompts_csv = generate_prompts(llamaModelName, llamaModel)
 
         # Save the generated prompts to a CSV file
         save_input_prompts_to_csv(input_prompts_csv)
