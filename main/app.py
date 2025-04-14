@@ -18,12 +18,17 @@ def main():
 
     #Mistral AI and meta-llama need the Hugging face cl login to work
     models = [
-        "mistralai/Mistral-7B-Instruct-v0.3",
-        "HumanLLMs/Human-Like-Qwen2.5-7B-Instruct",
-        "meta-llama/Llama-3.1-8B-Instruct",
-        "Qwen/Qwen2.5-7B-Instruct",
-        "ibm-granite/granite-3.2-8b-instruct",
-        "tiiuae/falcon-7b-instruct",
+        # "mistralai/Mistral-7B-Instruct-v0.3", # requires requested access
+        # "HumanLLMs/Human-Like-Qwen2.5-7B-Instruct", # done
+        # "meta-llama/Llama-3.1-8B-Instruct",
+        # "Qwen/Qwen2.5-7B-Instruct", # done
+        # "ibm-granite/granite-3.2-8b-instruct", # done
+        # "tiiuae/falcon-7b-instruct", # done
+        # "open-r1/OlympicCoder-7B",
+        # "HuggingFaceH4/zephyr-7b-beta" # done
+        # "deepseek-ai/deepseek-llm-7b-chat", # done
+        # "Qwen/Qwen2-7B-Chat",
+        # "mosaicml/mpt-7b-instruct" # needs its own model loader
     ]
 
     data_to_save = []
@@ -31,28 +36,27 @@ def main():
 
         model = GraniteModel(model_name) # todo - rename
         print("loaded model: " + model_name)
+
         for index, row in data.iterrows():
             row_start_time = time.time()  # Start timer for this row
+
+            print(f"\nProcessing Model: {model_name}, Prompt {index + 1}...")
             
-            irr_prompt = row[config.irr_col_name]
             rel_prompt = row[config.rel_col_name]
+            irr_prompt = row[config.irr_col_name]
+            irr_ask_prompt = row[config.irr_ask_col_name]
+            irr_context = row[config.irr_context_col]
             answer = row[config.answer_col_name]
-            
-            print(f"\nProcessing Row {index + 1}...\n")
-            
+                        
             # Generate model responses
             response_irr = model.generate_response(irr_prompt)
             response_rel = model.generate_response(rel_prompt)
-            
-            print(f"Irrelevant Context Response:\n{response_irr}\n")
-            print(f"Relevant Context Response:\n{response_rel}\n")
-            
+            response_irr_context = model.generate_response(irr_ask_prompt)
+                        
             # Compute similarity
             similarity_score_rel = model.compute_similarity(response_rel, answer)
-            print(f"Cosine Similarity for Relevant Response: {similarity_score_rel}\n")
             similarity_score_irr = model.compute_similarity(response_irr, answer)
-            print(f"Cosine Similarity for Irrelevant Response: {similarity_score_irr}\n")
-
+            similarity_score_irr_context = model.compute_similarity(response_irr_context, irr_context)
 
             # Calculate and print time taken for this row
             row_end_time = time.time()
@@ -62,21 +66,25 @@ def main():
             # Save data
             data_to_save.append(
                 {
-                    "Model": config.model_path,
+                    "Model": model_name,
                     "Relevant Prompt": rel_prompt,
                     "Irrelevant Prompt": irr_prompt,
+                    "Identify Irrelevant Context Prompt": irr_ask_prompt,
+                    "Irrelevant Context": irr_context,
                     "Correct answer": answer,
                     "Relevant Response": response_rel,
                     "Irrelevant Response": response_irr,
+                    "Identify Irrelevant Context Response": response_irr_context,
                     "Cosine Similarity (Relevant)": similarity_score_rel,
                     "Cosine Similarity (Irrelevant)": similarity_score_irr,
+                    "Cosine Similarity (Identify Irrelevant Context)": similarity_score_irr_context,
                     "Execution Time": row_time,
                 }
             )
 
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     data_folder = os.path.join(project_root, "main/data")
-    file_path = os.path.join(data_folder, "output_asrakm.csv")
+    file_path = os.path.join(data_folder, "output_file.csv")
 
     # Ensure the data folder exists
     os.makedirs(data_folder, exist_ok=True)
@@ -90,14 +98,19 @@ def main():
                 "Model", 
                 "Relevant Prompt", 
                 "Irrelevant Prompt", 
+                "Identify Irrelevant Context Prompt",
+                "Irrelevant Context",
                 "Correct answer",
                 "Relevant Response", 
                 "Irrelevant Response", 
+                "Identify Irrelevant Context Response",
                 "Cosine Similarity (Relevant)", 
                 "Cosine Similarity (Irrelevant)", 
+                "Cosine Similarity (Identify Irrelevant Context)",
                 "Execution Time"
             ])        # Write the header only once
-        writer.writeheader()
+        if not file_exists:
+            writer.writeheader()
         writer.writerows(data_to_save)
     # Calculate and print total execution time
     total_end_time = time.time()
