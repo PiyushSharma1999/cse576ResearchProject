@@ -70,3 +70,5 @@ VSCode Instance: Primary
 
 **Another note:**
 Go to config.py and change the model name if wanting to use a different model - read through model.py to see requirements
+
+

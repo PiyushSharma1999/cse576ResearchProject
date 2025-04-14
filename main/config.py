@@ -4,3 +4,4 @@ rel_col_name = "Prompt without irrelevant context"
 answer_col_name = "Correct answer"
 model_path = "HumanLLMs/Human-Like-Qwen2.5-7B-Instruct" # modify this to use a different model 
 device = "cuda"
+reasoning_model = "deepseek-ai/deepseek-v3"
