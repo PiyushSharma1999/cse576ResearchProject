@@ -160,13 +160,18 @@ def evaluate_responses(data_to_save, llamaModelName):
 
         # check if llm got relevant response correct
         rel_comparison = compare_relevant_responses(prompt, correct_answer, response_rel, llama70b)
-        # check if llm got irrelevant response correct
-        irr_comparison = compare_irrelevant_responses(irr_prompt, correct_answer, response_irr, llama70b)
 
-        # if it got tricked, consider it passed
-        if rel_comparison == "yes" and irr_comparison == "yes":
-            data_passed.append(row)
-            to_add["Tricked"] = "yes"
+        if  rel_comparison == "yes":
+            # check if llm got irrelevant response correct
+            irr_comparison = compare_irrelevant_responses(irr_prompt, correct_answer, response_irr, irr_context, llama70b)
+            # if it got tricked, consider it passed
+            if irr_comparison == "yes":
+                data_passed.append(row)
+                to_add["Tricked"] = "yes"
+            else:
+                data_not_passed.append(row)
+                to_add["Tricked"] = "no"
+
         #will add to the not passed data if not
         else:
             data_not_passed.append(row)
@@ -184,6 +189,7 @@ def evaluate_responses(data_to_save, llamaModelName):
             to_add["Identified"] = "no"
 
         # ad to grand total
+        print("Irrelevant prompt: ", irr_prompt, "Identified: ", to_add["Identified"], "Tricked: ", to_add["Tricked"])
         data_combined.append(to_add)
 
     print("Finished evaluating responses", "", len(data_passed), "passed and", len(data_not_passed), "not passed", "", len(data_identified_correctly), "identified correctly", "", len(data_identified_incorrectly), "identified incorrectly")
@@ -205,7 +211,7 @@ def compare_relevant_responses(prompt, correct_answer, response, llama70b):
     return result
 
     
-def compare_irrelevant_responses(prompt, correct_answer, response, irr_contex, llama70b):
+def compare_irrelevant_responses(prompt, correct_answer, response, irr_context, llama70b):
     # Prompt to compare correct answer with the LLM's relevant response
     comparisonPrompt = (
         f"For the prompt: {prompt}, this is the correct answer {correct_answer}. This is the irrelevant context that was included in the prompt: {irr_context}. If the following response answer correctly, respond only with NO. If the following response got the answer wrong, did it get it wrong because of the irrelevant context included? Respond with only YES or NO. "
