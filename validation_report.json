@@ -1,0 +1,82 @@
+[
+  {
+    "is_valid": false,
+    "details": {
+      "context_length": true,
+      "domain_alignment": false,
+      "answer_exclusion": true,
+      "factual_consistency": true
+    },
+    "entry": {
+      "domain": "general knowledge",
+      "clean_prompt": "Why do pulsars emit periodic electromagnetic radiation?",
+      "irrelevant_context": "The Earth\u2019s biosphere comprises interconnected ecosystems that sustain life through biogeochemical cycles such as the carbon, nitrogen, and water cycles. Photosynthesis, conducted by autotrophs like plants and cyanobacteria, converts solar energy into chemical energy, forming the base of most food webs. Biodiversity, measured by species richness and genetic variation, enhances ecosystem resilience to disturbances like climate change or invasive species. The lithosphere\u2019s tectonic activity drives continental drift, influencing climate patterns and species distribution over geological timescales. Atmospheric ozone absorbs ultraviolet radiation, reducing mutagenic effects on terrestrial organisms, while greenhouse gases like CO\u2082 regulate Earth\u2019s radiative balance. Human activities, including industrialization and deforestation, have accelerated anthropogenic climate change, altering habitats and threatening biodiversity. Advances in renewable energy technologies, such as photovoltaic cells and wind turbines, aim to mitigate these impacts by reducing reliance on fossil fuels.",
+      "combined_prompt": "The Earth\u2019s biosphere comprises interconnected ecosystems that sustain life through biogeochemical cycles such as the carbon, nitrogen, and water cycles. Photosynthesis, conducted by autotrophs like plants and cyanobacteria, converts solar energy into chemical energy, forming the base of most food webs. Biodiversity, measured by species richness and genetic variation, enhances ecosystem resilience to disturbances like climate change or invasive species. The lithosphere\u2019s tectonic activity drives continental drift, influencing climate patterns and species distribution over geological timescales. Atmospheric ozone absorbs ultraviolet radiation, reducing mutagenic effects on terrestrial organisms, while greenhouse gases like CO\u2082 regulate Earth\u2019s radiative balance. Human activities, including industrialization and deforestation, have accelerated anthropogenic climate change, altering habitats and threatening biodiversity. Advances in renewable energy technologies, such as photovoltaic cells and wind turbines, aim to mitigate these impacts by reducing reliance on fossil fuels.\n\nWhy do pulsars emit periodic electromagnetic radiation?",
+      "expected_answer": "Pulsars' rapid rotation and strong magnetic fields cause beams of electromagnetic radiation to sweep through space like a lighthouse, observed as periodic pulses when aligned with Earth."
+    }
+  },
+  {
+    "is_valid": false,
+    "details": {
+      "context_length": false,
+      "domain_alignment": true,
+      "answer_exclusion": true,
+      "factual_consistency": true
+    },
+    "entry": {
+      "domain": "fictional stories",
+      "clean_prompt": "What narrative principle is violated if a ceremonial dagger introduced in Act 1, Scene 2 of a three-act play remains unused by the story\u2019s conclusion?",
+      "irrelevant_context": "Fictional stories often employ narrative structures such as the three-act framework or hero\u2019s journey to shape plot progression and character development. Authors utilize techniques like world-building to establish immersive settings, integrating elements like diegetic lore or non-linear timelines to enhance verisimilitude. Character archetypes, such as the antihero or mentor figure, serve thematic purposes by embodying moral ambiguities or conveying cultural critiques. Genre conventions, from hard sci-fi\u2019s adherence to scientific accuracy to magical realism\u2019s blending of fantastical and mundane, influence reader expectations and narrative constraints. Dialogue in fiction frequently employs subtext to convey unspoken tensions, while focalization determines perspective through first-person, third-person limited, or omniscient narration. Symbolism and motifs, such as recurring imagery or leitmotifs, reinforce thematic coherence across a story\u2019s arc. Conflict-driven plots often hinge on internal struggles (man vs. self) or external forces (man vs. society), with resolution strategies varying by genre and authorial intent.",
+      "combined_prompt": "Fictional stories often employ narrative structures such as the three-act framework or hero\u2019s journey to shape plot progression and character development. Authors utilize techniques like world-building to establish immersive settings, integrating elements like diegetic lore or non-linear timelines to enhance verisimilitude. Character archetypes, such as the antihero or mentor figure, serve thematic purposes by embodying moral ambiguities or conveying cultural critiques. Genre conventions, from hard sci-fi\u2019s adherence to scientific accuracy to magical realism\u2019s blending of fantastical and mundane, influence reader expectations and narrative constraints. Dialogue in fiction frequently employs subtext to convey unspoken tensions, while focalization determines perspective through first-person, third-person limited, or omniscient narration. Symbolism and motifs, such as recurring imagery or leitmotifs, reinforce thematic coherence across a story\u2019s arc. Conflict-driven plots often hinge on internal struggles (man vs. self) or external forces (man vs. society), with resolution strategies varying by genre and authorial intent.\n\nWhat narrative principle is violated if a ceremonial dagger introduced in Act 1, Scene 2 of a three-act play remains unused by the story\u2019s conclusion?",
+      "expected_answer": "Chekhov's Gun."
+    }
+  },
+  {
+    "is_valid": false,
+    "details": {
+      "context_length": true,
+      "domain_alignment": false,
+      "answer_exclusion": true,
+      "factual_consistency": true
+    },
+    "entry": {
+      "domain": "general knowledge",
+      "clean_prompt": "What principle prevents two electrons in the same orbital from having identical quantum numbers?",
+      "irrelevant_context": "The Earth's hydrosphere comprises approximately 71% of the planet's surface, with 97.5% of this water being saline and contained within oceans. The atmosphere, composed primarily of nitrogen (78%) and oxygen (21%), facilitates the greenhouse effect through trace gases like carbon dioxide and methane. Photosynthesis in terrestrial plants contributes to the carbon cycle by converting atmospheric CO\u2082 into organic compounds using chlorophyll. Tectonic plate interactions at divergent boundaries create mid-ocean ridges, while convergent boundaries form subduction zones and volcanic arcs. The human circulatory system relies on hemoglobin in erythrocytes to transport oxygen systemically. Renewable energy systems, such as photovoltaic cells and wind turbines, now account for over 30% of global electricity generation. The International Space Station orbits Earth at an average altitude of 408 kilometers, completing 15.5 revolutions daily relative to the Sun.",
+      "combined_prompt": "The Earth's hydrosphere comprises approximately 71% of the planet's surface, with 97.5% of this water being saline and contained within oceans. The atmosphere, composed primarily of nitrogen (78%) and oxygen (21%), facilitates the greenhouse effect through trace gases like carbon dioxide and methane. Photosynthesis in terrestrial plants contributes to the carbon cycle by converting atmospheric CO\u2082 into organic compounds using chlorophyll. Tectonic plate interactions at divergent boundaries create mid-ocean ridges, while convergent boundaries form subduction zones and volcanic arcs. The human circulatory system relies on hemoglobin in erythrocytes to transport oxygen systemically. Renewable energy systems, such as photovoltaic cells and wind turbines, now account for over 30% of global electricity generation. The International Space Station orbits Earth at an average altitude of 408 kilometers, completing 15.5 revolutions daily relative to the Sun.\n\nWhat principle prevents two electrons in the same orbital from having identical quantum numbers?",
+      "expected_answer": "Pauli exclusion principle."
+    }
+  },
+  {
+    "is_valid": true,
+    "details": {
+      "context_length": true,
+      "domain_alignment": true,
+      "answer_exclusion": true,
+      "factual_consistency": true
+    },
+    "entry": {
+      "domain": "fictional stories",
+      "clean_prompt": "What narrative device necessitates the inclusion of a \"Watson\" to ensure audience comprehension in deductive fiction?",
+      "irrelevant_context": "Fictional stories employ narrative structures such as the three-act framework or hero\u2019s journey to shape plot progression and character development. Authors often utilize diegesis\u2014the story\u2019s internal world\u2014to establish setting, rules, and stakes, enhancing reader immersion. Protagonists typically undergo dynamic arcs, evolving through conflicts that explore themes like moral ambiguity or existential identity. World-building techniques, including secondary creation of languages or cultures, lend verisimilitude to speculative genres like fantasy or science fiction. Non-linear timelines, epistolary formats, or unreliable narrators are stylistic devices used to subvert traditional storytelling conventions. Themes in fiction frequently allegorize real-world issues, enabling metaphorical critique without direct reference. The suspension of disbelief, a psychological contract between author and audience, relies on internal consistency to maintain engagement despite fantastical elements.",
+      "combined_prompt": "Fictional stories employ narrative structures such as the three-act framework or hero\u2019s journey to shape plot progression and character development. Authors often utilize diegesis\u2014the story\u2019s internal world\u2014to establish setting, rules, and stakes, enhancing reader immersion. Protagonists typically undergo dynamic arcs, evolving through conflicts that explore themes like moral ambiguity or existential identity. World-building techniques, including secondary creation of languages or cultures, lend verisimilitude to speculative genres like fantasy or science fiction. Non-linear timelines, epistolary formats, or unreliable narrators are stylistic devices used to subvert traditional storytelling conventions. Themes in fiction frequently allegorize real-world issues, enabling metaphorical critique without direct reference. The suspension of disbelief, a psychological contract between author and audience, relies on internal consistency to maintain engagement despite fantastical elements.\n\nWhat narrative device necessitates the inclusion of a \"Watson\" to ensure audience comprehension in deductive fiction?",
+      "expected_answer": "The Watson."
+    }
+  },
+  {
+    "is_valid": true,
+    "details": {
+      "context_length": true,
+      "domain_alignment": true,
+      "answer_exclusion": true,
+      "factual_consistency": true
+    },
+    "entry": {
+      "domain": "fictional stories",
+      "clean_prompt": "Why does Severian assert perfect recall despite inconsistencies in his narrative in *The Book of the New Sun*?",
+      "irrelevant_context": "Fictional stories often employ narrative structures such as the three-act framework or nonlinear chronology to engage audiences. Character archetypes, including protagonists, antagonists, and foils, serve to advance thematic elements like moral ambiguity or redemption arcs. World-building techniques, such as diegetic exposition and mise-en-sc\u00e8ne, establish immersive settings in genres like speculative fiction or magical realism. Dialogue-driven plots may utilize subtext or dramatic irony to convey underlying conflicts, while symbolic motifs reinforce allegorical meanings. Genre conventions, from the hero\u2019s journey in epic fantasy to the unreliable narrator in psychological thrillers, shape audience expectations. Authors frequently integrate intertextuality, referencing myths or historical events to deepen thematic resonance. The structural pacing of rising action, climax, and denouement ensures narrative cohesion across mediums like novels, films, or serialized podcasts.",
+      "combined_prompt": "Fictional stories often employ narrative structures such as the three-act framework or nonlinear chronology to engage audiences. Character archetypes, including protagonists, antagonists, and foils, serve to advance thematic elements like moral ambiguity or redemption arcs. World-building techniques, such as diegetic exposition and mise-en-sc\u00e8ne, establish immersive settings in genres like speculative fiction or magical realism. Dialogue-driven plots may utilize subtext or dramatic irony to convey underlying conflicts, while symbolic motifs reinforce allegorical meanings. Genre conventions, from the hero\u2019s journey in epic fantasy to the unreliable narrator in psychological thrillers, shape audience expectations. Authors frequently integrate intertextuality, referencing myths or historical events to deepen thematic resonance. The structural pacing of rising action, climax, and denouement ensures narrative cohesion across mediums like novels, films, or serialized podcasts.\n\nWhy does Severian assert perfect recall despite inconsistencies in his narrative in *The Book of the New Sun*?",
+      "expected_answer": "Severian's assertion of perfect recall underscores his role as an unreliable narrator, reflecting thematic explorations of memory's subjectivity and truth's malleability within the narrative's layered structure."
+    }
+  }
+]

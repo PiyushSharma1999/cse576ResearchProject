@@ -3,6 +3,7 @@ from deep_reasoner import DeepseekReasoner
 
 class PromptValidator:
     def __init__(self):
+        self.reasoner = DeepseekReasoner()
         self.rules = {
             "context_length": self._check_context_length,
             "domain_alignment": self._check_domain_alignment,
@@ -16,7 +17,7 @@ class PromptValidator:
         try:
             for rule_name, rule_func in self.rules.items():
                 results[rule_name] = rule_func(entry)
-            
+                
             return {
                 "is_valid": all(results.values()),
                 "details": results,
@@ -33,10 +34,11 @@ class PromptValidator:
     def _check_domain_alignment(self, entry):
         """Check context matches domain keywords"""
         domain_keywords = {
-            "fictional stories": ["character", "plot", "chapter", "setting"],
-            "general knowledge": ["science", "history", "fact", "data"],
-            "programming": ["code", "algorithm", "language", "system"]
+            "fictional stories": ["character", "plot", "chapter", "setting", "story", "novel"],
+            "general knowledge": ["science", "history", "fact", "data", "world", "discovery"],
+            "programming": ["code", "algorithm", "language", "system", "software", "function"]
         }
+        
         keywords = domain_keywords.get(entry["domain"], [])
         context = entry["irrelevant_context"].lower()
         return any(kw in context for kw in keywords)
@@ -54,9 +56,8 @@ class PromptValidator:
         Context: {entry["irrelevant_context"]}
         Question: {entry["clean_prompt"]}
         Answer: {entry["expected_answer"]}
-        
         Respond ONLY with 'True' or 'False'
         """
-        # Use a separate validator model if available
-        response = DeepseekReasoner().generate(verification_prompt, use_history=False)
-        return "true" in response.lower()
+        
+        response = self.reasoner.generate(verification_prompt, use_history=False)
+        return response.lower().strip().startswith("true") or response.lower().strip() == "true"

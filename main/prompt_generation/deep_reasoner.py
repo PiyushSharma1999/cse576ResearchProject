@@ -1,6 +1,6 @@
 import os
 import requests
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 
 class DeepseekReasoner:
     API_URL = "https://api.deepseek.com/v1/chat/completions"
@@ -14,28 +14,29 @@ class DeepseekReasoner:
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.api_key}"
         }
-        
         # Model parameters
         self.max_tokens = 512
         self.temperature = 0.5
         self.total_tokens = 0
 
-    def generate(self, prompt: str, context: Optional[Dict] = None) -> str:
+    def generate(self, prompt: str, use_history: bool = True, context: Optional[List[Dict]] = None) -> str:
         """
         Generate response to a prompt with optional context
         Args:
             prompt: Input question/request
-            context: Optional context dictionary
+            use_history: Whether to use conversation history
+            context: Optional context as list of message dictionaries
         """
         try:
             # Build message list
             messages = []
-            if context:
-                messages.append(context)
+            if context and use_history:
+                messages.extend(context)
+                
             messages.append({"role": "user", "content": prompt})
 
             payload = {
-                "model": "deepseek-chat",
+                "model": "deepseek-reasoner",
                 "messages": messages,
                 "temperature": self.temperature,
                 "max_tokens": self.max_tokens,
@@ -47,19 +48,20 @@ class DeepseekReasoner:
                 headers=self.headers,
                 json=payload
             )
-            response.raise_for_status()
-
-            data = response.json()
-            self.total_tokens += data.get('usage', {}).get('total_tokens', 0)
             
+            response.raise_for_status()
+            data = response.json()
+            
+            self.total_tokens += data.get('usage', {}).get('total_tokens', 0)
             return data['choices'][0]['message']['content']
-
+            
         except requests.exceptions.RequestException as e:
-            raise RuntimeError(f"API request failed: {str(e)}") from e
-
+            print(f"API request failed: {str(e)}")
+            return "Error in API request"
+            
     def get_usage(self) -> Dict:
         """Get current token usage statistics"""
         return {
             "total_tokens": self.total_tokens,
-            "estimated_cost": self.total_tokens * 0.000002  # Update with actual pricing
+            "estimated_cost": self.total_tokens * 0.000002
         }

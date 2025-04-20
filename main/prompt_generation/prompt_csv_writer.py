@@ -2,17 +2,19 @@ import csv
 
 class PromptCSVWriter:
     @staticmethod
-    def write_to_csv(data, filename = "prompts.csv"):
-        """Write dataset to CSV with combined prompts column"""
+    def write_to_csv(data, filename="prompts.csv"):
+        """Write dataset to CSV"""
         with open(filename, 'w', newline='', encoding='utf-8') as file:
             writer = csv.DictWriter(file, fieldnames=[
-                "domain", 
+                "domain",
                 "clean_prompt",
                 "irrelevant_context",
                 "combined_prompt",
                 "expected_answer"
             ])
+            
             writer.writeheader()
             for item in data:
-                combined = f"{item['irrelevant_context']}\n\n{item['clean_prompt']}"
-                writer.writerow({**item, "combined_prompt": combined})
+                writer.writerow(item)
+        
+        print(f"Dataset written to {filename}")
