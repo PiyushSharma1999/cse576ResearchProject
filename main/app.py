@@ -2,6 +2,7 @@
 
 import os
 import time
+from deepseek_preprocessor import DeepSeekPreprocess
 from preprocess import Preprocess
 from model import GraniteModel
 import config
@@ -11,12 +12,26 @@ import torch
 import pandas as pd
 
 def generate_prompts(model_name, llamaModel):
-    llamaPrompt = '''create 30 prompts in either the general knowledge domain or fictional story domain and ask a question about the prompt. Include 1-2 lines of irrelevant context, which should be relevant to the information in the prompt but have no impact on the solution to the question asked. The irrelevant context, when included, should be able to distract a small LLM trained on around 7 billion parameter. Create the prompt in the following CSV format, ensure no commas are in the response or add the correct punctuation for it to be acceptable in the CSV format. Respond with only the CSV prompt.
-    Prompt without irrelevant context,Prompt with irrelevant context,Prompt with irrelevant context and asking for irrelevant context,Irrelevant context,Correct answer
+    llamaPrompt = '''Create 30 reasoning problems from domains such as a leetcode problem or fictional storytelling. For each, include:
 
-    Some examples below
-    "Four people (A=1min, B=2min, C=5min, D=10min) must cross a bridge at night. The bridge holds max 2 people. They have one flashlight. How do all cross in 17 minutes?","Four individuals (A=1min [vegan], B=2min [left-handed], C=5min [allergic to nuts], D=10min [former Olympian]) must cross a suspension bridge (built 1937, max load 300lbs) at 02:00hrs during a storm (winds 25mph). The bridge (inspected monthly per DOT regs) holds max 2 people. They share a Maglite XL50 (3xAAA batteries at 78% charge). How do all cross in 17 minutes while complying with OSHA safety standards?","Identify the irrelevant context in the prompt: ""Four individuals (A=1min [vegan], B=2min [left-handed], C=5min [allergic to nuts], D=10min [former Olympian]) must cross a suspension bridge (built 1937, max load 300lbs) at 02:00hrs during a storm (winds 25mph). The bridge (inspected monthly per DOT regs) holds max 2 people. They share a Maglite XL50 (3xAAA batteries at 78% charge). How do all cross in 17 minutes while complying with OSHA safety standards?""","vegan.left-handed.allergic to nuts.former Olympian. (built 1937, max load 300lbs) at 02:00hrs during a storm (winds 25mph).(inspected monthly per DOT regs). They share a Maglite XL50 (3xAAA batteries at 78% charge) while complying with OSHA safety standards",1. A+B cross (2min). 2. A returns (1min). 3. C+D cross (10min). 4. B returns (2min). 5. A+B cross (2min). Total: 17 minutes
-    "In the story, Sarah discovers a hidden door in her attic that leads to a magical forest. What does Sarah find in the attic?","In the story, Sarah discovers a hidden door in her attic that leads to a magical forest. Sarah's grandmother had told her stories about enchanted realms when she was younger. The magical forest is known for its talking animals and ever-changing seasons. What does Sarah find in the attic?","Identify the irrelevant context in the prompt: ""In the story, Sarah discovers a hidden door in her attic that leads to a magical forest. Sarah's grandmother had told her stories about enchanted realms when she was younger. The magical forest is known for its talking animals and ever-changing seasons. What does Sarah find in the attic?""",Sarah's grandmother’s stories about enchanted realms.,Sarah finds a hidden door in the attic that leads to a magical forest.'''
+        1. A version of the prompt with 3 ore more sentences of context to help answer the question.
+        2. A version of the same prompt *with* 3 or more lines of irrelevant context added. This context should be related to the topic but not helpful in solving the question. Place this irrelevant context **before** the question.
+        3. A version where you ask the model to **identify the irrelevant context**. This version should begin with the full context (irrelevant + relevant), followed by a clear reasoning question, then end with: *"What part of the context is irrelevant or unnecessary to answer the above reasoning question?"*
+        4. The actual irrelevant context itself, copied exactly.
+        5. The correct answer to the reasoning question.
+
+        **Format the response as a single CSV table** using the following header row:
+
+        Prompt without irrelevant context,Prompt with irrelevant context,Prompt with irrelevant context and asking for irrelevant context,Irrelevant Context,Correct answer
+
+        Use quotation marks to wrap each full field. Do not include any commas unless they are properly escaped or replaced with punctuation such as semicolons. Respond ONLY with the CSV. Do not add any explanations or extra content.
+
+        Here is an example of the format:
+
+        "A train travels from Station A to Station B, a distance of 200 miles. The train travels at a constant speed of 50 miles per hour. It does not stop at any other stations during the journey. If the train leaves Station A at 9:00 AM, what time will it arrive at Station B?","A train travels from Station A to Station B, a distance of 200 miles. The train travels at a constant speed of 50 miles per hour. There is a 30-minute gas stop at Station C, which is located 100 miles between Station A and Station B. The train does not need to stop at Station C for gas on this particular trip, but it would normally refuel there on long journeys. The train is also equipped with a high-speed Wi-Fi network for passengers to use during the trip. The train’s air conditioning system is set to a comfortable 72°F for optimal passenger comfort. If the train leaves Station A at 9:00 AM, what time will it arrive at Station B?","Context: The train does not need to stop at Station C for gas on this particular trip, but it would normally refuel there on long journeys. The train is also equipped with a high-speed Wi-Fi network for passengers to use during the trip. The train’s air conditioning system is set to a comfortable 72°F for optimal passenger comfort. A train travels from Station A to Station B, a distance of 200 miles. The train travels at a constant speed of 50 miles per hour. Reasoning Question: If the train leaves Station A at 9:00 AM, what time will it arrive at Station B? What part of the context is irrelevant or unnecessary to answer the above reasoning question?","There is a 30-minute gas stop at Station C, which is located 100 miles between Station A and Station B. The train does not need to stop at Station C for gas on this particular trip, but it would normally refuel there on long journeys. The train is also equipped with a high-speed Wi-Fi network for passengers to use during the trip. The train’s air conditioning system is set to a comfortable 72°F for optimal passenger comfort.","The train travels a total of 200 miles at a speed of 50 miles per hour. The total travel time is 200 ÷ 50 = 4 hours. The train leaves at 9:00 AM, so it will arrive at 1:00 PM."
+
+        Now generate 30 such rows in this format.
+    '''
 
     print("generating prompts")
 
@@ -45,11 +60,11 @@ def save_input_prompts_to_csv(csvfile):
 
     # Define file paths
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    data_folder = os.path.join(project_root, "main/data")
-    file_path = os.path.join(data_folder, "generated_input_file.csv")
+    input_data_folder = os.path.join(project_root, "main/data/input")
+    file_path = os.path.join(input_data_folder, "generated_input_file.csv")
 
     # Ensure the data folder exists
-    os.makedirs(data_folder, exist_ok=True)
+    os.makedirs(input_data_folder, exist_ok=True)
 
     # Save the input data to a CSV file
     file_exists = os.path.exists(file_path)
@@ -61,15 +76,16 @@ def save_input_prompts_to_csv(csvfile):
 
 
 def process_models(data):
+
     #Mistral AI and meta-llama need the Hugging face cl login to work
     models = [
         "Qwen/Qwen2.5-7B-Instruct", 
         "tiiuae/falcon-7b-instruct",
-        "ibm-granite/granite-3.2-8b-instruct",
-        "mistralai/Mistral-7B-Instruct-v0.3",
-        "meta-llama/Llama-3.1-8B-Instruct",
+        # "ibm-granite/granite-3.2-8b-instruct",
+        # "mistralai/Mistral-7B-Instruct-v0.3",
+        # "meta-llama/Llama-3.1-8B-Instruct",
         #"HumanLLMs/Human-Like-Qwen2.5-7B-Instruct",
-        "CohereForAI/aya-expanse-8b"
+        # "CohereForAI/aya-expanse-8b"
         #"google/gemma-7b-it",
         #"Qwen/Qwen2.5-7B-Instruct",      
         # "mistralai/Mistral-7B-Instruct-v0.3", # requires requested access
@@ -238,129 +254,60 @@ def compare_identified_responses(irr_ask_prompt, irr_context, response_irr_conte
     return result
 
 
-def save_results(data_passed, data_not_passed, data_identified_correctly, data_identified_incorrectly, data_combined):
-    #find the ouput csv file route
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    data_folder = os.path.join(project_root, "main/data")
-    file_path_passed = os.path.join(data_folder, "output_passed_file.csv")
-    file_path_not_passed = os.path.join(data_folder, "output_not_passed_file.csv")
-    file_path_identified_correctly = os.path.join(data_folder, "output_identified_correctly_file.csv")
-    file_path_identified_incorrectly = os.path.join(data_folder, "output_identified_incorrectly_file.csv")
+def save_responses_only_to_csv(output_path, filename, data):
+    data_to_save = process_models(data)
+    processed_outputs = os.path.join(output_path, filename)
 
-    combined_path = os.path.join(data_folder, "combined_output_file.csv")
+    # Ensure the output directory exists
+    os.makedirs(output_path, exist_ok=True)
 
-    # Ensure the data folder exists
-    os.makedirs(data_folder, exist_ok=True)
+    # Check if the file already exists
+    file_exists = os.path.exists(processed_outputs)
 
-    file_exists = os.path.exists(file_path_passed)
-
-    # Save the output that passed to a csv
-    with open(file_path_passed, "a", newline='') as f:
-        # if header does not exit, add one
+    # Save the output that passed to a CSV
+    with open(processed_outputs, "a", newline='') as f:
         writer = csv.DictWriter(f, fieldnames=[
-                "Model", 
-                "Relevant Prompt", 
-                "Irrelevant Prompt", 
-                "Identify Irrelevant Context Prompt",
-                "Irrelevant Context",
-                "Correct answer",
-                "Relevant Response", 
-                "Irrelevant Response", 
-                "Identify Irrelevant Context Response",
-                "Tricked",
-                "Identified"
-            ])        # Write the header only once
+            "Model", 
+            "Relevant Prompt", 
+            "Irrelevant Prompt", 
+            "Identify Irrelevant Context Prompt",
+            "Irrelevant Context",
+            "Correct answer",
+            "Relevant Response", 
+            "Irrelevant Response", 
+            "Identify Irrelevant Context Response"
+        ])
+        
         if not file_exists:
             writer.writeheader()
-        writer.writerows(data_passed)
-    
-    file_exists = os.path.exists(file_path_not_passed)
+        
+        writer.writerows(data_to_save)
 
-    # Save the output to a csv
-    with open(file_path_not_passed, "a", newline='') as f:
-        # if header does not exit, add one
+
+def save_responses_and_evaluation_to_csv(output_path, filename, data):
+    processed_outputs = os.path.join(output_path, filename)
+    os.makedirs(output_path, exist_ok=True)
+    file_exists = os.path.exists(processed_outputs)
+
+    with open(processed_outputs, "a", newline='') as f:
         writer = csv.DictWriter(f, fieldnames=[
-                "Model", 
-                "Relevant Prompt", 
-                "Irrelevant Prompt", 
-                "Identify Irrelevant Context Prompt",
-                "Irrelevant Context",
-                "Correct answer",
-                "Relevant Response", 
-                "Irrelevant Response", 
-                "Identify Irrelevant Context Response",
-                "Tricked",
-                "Identified"
-            ])        # Write the header only once
+            "Model", 
+            "Relevant Prompt", 
+            "Irrelevant Prompt", 
+            "Identify Irrelevant Context Prompt",
+            "Irrelevant Context",
+            "Correct answer",
+            "Relevant Response", 
+            "Irrelevant Response", 
+            "Identify Irrelevant Context Response",
+            "Tricked",
+            "Identified"
+        ])
+        
         if not file_exists:
             writer.writeheader()
-        writer.writerows(data_not_passed)
-
-    file_exists = os.path.exists(file_path_identified_correctly)
-    # Save the output to a csv
-    with open(file_path_identified_correctly, "a", newline='') as f:
-        # if header does not exit, add one
-        writer = csv.DictWriter(f, fieldnames=[
-                "Model", 
-                "Relevant Prompt", 
-                "Irrelevant Prompt", 
-                "Identify Irrelevant Context Prompt",
-                "Irrelevant Context",
-                "Correct answer",
-                "Relevant Response", 
-                "Irrelevant Response", 
-                "Identify Irrelevant Context Response",
-                "Tricked",
-                "Identified"
-            ])        # Write the header only once
-        if not file_exists:
-            writer.writeheader()
-        writer.writerows(data_identified_correctly)
-
-    file_exists = os.path.exists(file_path_identified_incorrectly)
-    # Save the output to a csv
-    with open(file_path_identified_incorrectly, "a", newline='') as f:
-        # if header does not exit, add one
-        writer = csv.DictWriter(f, fieldnames=[
-                "Model", 
-                "Relevant Prompt", 
-                "Irrelevant Prompt", 
-                "Identify Irrelevant Context Prompt",
-                "Irrelevant Context",
-                "Correct answer",
-                "Relevant Response", 
-                "Irrelevant Response", 
-                "Identify Irrelevant Context Response",
-                "Tricked",
-                "Identified"
-            ])        # Write the header only once
-        if not file_exists:
-            writer.writeheader()
-        writer.writerows(data_identified_incorrectly)
-
-    file_exists = os.path.exists(combined_path)
-    # Save the output to a csv
-    with open(combined_path, "a", newline='') as f:
-        # if header does not exit, add one
-        writer = csv.DictWriter(f, fieldnames=[
-                "Model", 
-                "Relevant Prompt", 
-                "Irrelevant Prompt", 
-                "Identify Irrelevant Context Prompt",
-                "Irrelevant Context",
-                "Correct answer",
-                "Relevant Response", 
-                "Irrelevant Response", 
-                "Identify Irrelevant Context Response",
-                "Tricked",
-                "Identified"
-            ])        # Write the header only once
-        if not file_exists:
-            writer.writeheader()
-        writer.writerows(data_combined)
-
-    print("Finished saving results to CSV files")
-
+        
+        writer.writerows(data)
 
 
 def main():
@@ -368,47 +315,60 @@ def main():
     total_start_time = time.time()
     llamaModelName = "meta-llama/Llama-3.3-70B-Instruct" 
 
-    llamaModel = GraniteModel(llamaModelName)
-
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    data_folder = os.path.join(project_root, "main/data")
-    input_file_path = os.path.join(data_folder, "input_file.csv")
-    output_file_path = os.path.join(data_folder, "output_file.csv")
+    manual_data_folder = os.path.join(project_root, "main/data/manual")
+    output_data_folder = os.path.join(project_root, "main/data/output")
+    prompt_generation_folder = os.path.join(project_root, "main/prompt_generation")
 
+    deepSeek_prompts_file_path = os.path.join(prompt_generation_folder, "prompts.csv")
+    manual_input_file_path = os.path.join(manual_data_folder, "input_file.csv")
+    manual_output_file_path = os.path.join(manual_data_folder, "output_file.csv")
+    preran_output_file_path = os.path.join(output_data_folder, "processed_output.csv")
 
-    if os.path.exists(input_file_path) and os.path.getsize(input_file_path) > 0:
-        print(f"{input_file_path} found and is not empty, loading data...")
+    need_to_process = False
 
-        if os.path.exists(output_file_path) and os.path.getsize(output_file_path) > 0:
-            print(f"{output_file_path} found and is not empty, loading data...")
+    # If Deep Seek generated prompts file exists and is not empty, load it
+    if os.path.exists(deepSeek_prompts_file_path) and os.path.getsize(deepSeek_prompts_file_path) > 0:
+        print(f"Deep seek generated prompts csv found and is not empty, loading data...")
 
-            # output exists, just evaluate and save
-            data_to_save = pd.read_csv(output_file_path).to_dict(orient="records")
-            # data_to_save = data_to_save[0:1]  # Limit to first 10 rows for testing
-            data_passed, data_not_passed, data_identified_correctly, data_identified_incorrectly, data_combined = evaluate_responses(data_to_save, llamaModelName)
-            save_results(data_passed, data_not_passed, data_identified_correctly, data_identified_incorrectly, data_combined)
+        # Load and display data
+        preprocessor = DeepSeekPreprocess(file_name=deepSeek_prompts_file_path)
+        preprocessor.display_data()
+        data = preprocessor.get_columns()
 
-            torch.cuda.empty_cache()
+        need_to_process = True
 
-            total_end_time = time.time()
-            total_time = total_end_time - total_start_time
-            print(f"Total Execution Time: {total_time:.2f} seconds")
+    # If manual input file exists and is not empty, load it
+    elif os.path.exists(manual_input_file_path) and os.path.getsize(manual_input_file_path) > 0:
+        print(f"Manual prompts csv found and is not empty, loading data...")
 
-            return
+        # If manual output responses file exists and is not empty, load it and evaluate it
+        if os.path.exists(manual_output_file_path) and os.path.getsize(manual_output_file_path) > 0:
+            print(f"{manual_output_file_path} found and is not empty, loading data...")
+            data_to_save = pd.read_csv(manual_output_file_path).to_dict(orient="records")
+
+        # If the output file is not found, check if the preran_output_file_path exists <- this csv holds responses that were generated but not evaluated yet
+        elif os.path.exists(preran_output_file_path) and os.path.getsize(preran_output_file_path) > 0:
+            print(f"{preran_output_file_path} found and is not empty, loading data...")
+            data_to_save = pd.read_csv(preran_output_file_path).to_dict(orient="records")
+
         else:
-            preprocessor = Preprocess(file_name=input_file_path)
+            # Load and display data
+            preprocessor = Preprocess(file_name=manual_input_file_path)
+            preprocessor.display_data()
             data = preprocessor.get_columns()
-    else:
-        print(f"{input_file_path} not found or is empty, generating data...")
 
-        #will use the deepseep v2 model to create an initial dataset to test
+            need_to_process = True
+
+    # If neither file exists or is empty, generate new data
+    else:
+        print(f"Manual input and Deep Seek prompts csv not found or is empty, generating data...")
+
+        llamaModel = GraniteModel(llamaModelName)
         torch.cuda.empty_cache()
-        #llamaModelName = "meta-llama/Llama-3.3-70B-Instruct" 
         
         # Generate input prompts 
         input_prompts_csv = generate_prompts(llamaModelName, llamaModel)
-
-        # Save the generated prompts to a CSV file
         save_input_prompts_to_csv(input_prompts_csv)
 
         #will delete the model and free up the cache
@@ -420,20 +380,21 @@ def main():
         preprocessor.display_data()
         data = preprocessor.get_columns()
 
-    
+        need_to_process = True
 
-    
-    # Process models and generate responses
-    data_to_save = process_models(data)
 
+    if need_to_process:
+        # Load the data from the CSV file
+        data_to_save = process_models(data)
+        save_responses_only_to_csv(output_data_folder, "processed_output.csv", data_to_save)
 
     # Evaluate responses
-    data_passed, data_not_passed, data_identified_correctly, data_identified_incorrectly, data_combined = evaluate_responses(data_to_save, llamaModelName)
-        
+    data_passed, data_not_passed, data_identified_correctly, data_identified_incorrectly, data_combined = evaluate_responses(data_to_save, llamaModelName)    
 
     # Save results to CSV files
-    save_results(data_passed, data_not_passed, data_identified_correctly, data_identified_incorrectly, data_combined)
-
+    save_responses_and_evaluation_to_csv(output_data_folder, "output_passed_file.csv", data_passed)
+    save_responses_and_evaluation_to_csv(output_data_folder, "output_not_passed_file.csv", data_not_passed)
+    save_responses_and_evaluation_to_csv(output_data_folder, "combined_output_file.csv", data_combined)    
     
     # Clear the model to free memory
     del llama70b
