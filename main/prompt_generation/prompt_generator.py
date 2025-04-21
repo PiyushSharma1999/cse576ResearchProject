@@ -87,13 +87,16 @@ class AutomatedPromptGenerator:
                 
                 # Create combined prompt (context + clean prompt)
                 combined_prompt = f"{irrelevant_context}\n\n{clean_prompt}"
+
+                irr_context_identification_prompt = f"{combined_prompt} \n\n What part of the context is irrelevant or unnecessary to answer the above reasoning question?"
                 
                 dataset.append({
                     "domain": domain,
                     "clean_prompt": clean_prompt,
                     "irrelevant_context": irrelevant_context,
                     "combined_prompt": combined_prompt,
-                    "expected_answer": expected_answer
+                    "expected_answer": expected_answer,
+                    "irrelevant_context_identification_prompt": irr_context_identification_prompt
                 })
                 print(f"Generated sample {len(dataset)}/{num_samples}")
             except Exception as e:

@@ -1,5 +1,6 @@
 import os
 import json
+import config
 from prompt_generator import AutomatedPromptGenerator
 from prompt_validator import PromptValidator
 from prompt_csv_writer import PromptCSVWriter
@@ -45,7 +46,7 @@ def main():
     
     # Write valid entries to CSV
     if valid_dataset:
-        PromptCSVWriter.write_to_csv(valid_dataset, output_csv)
+        PromptCSVWriter.write_to_csv(valid_dataset, config.auto_gen_fieldnames, output_csv)
     else:
         print("No valid entries found. CSV not created.")
 
