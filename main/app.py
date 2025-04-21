@@ -76,9 +76,13 @@ def save_input_prompts_to_csv(csvfile):
 
 
 def process_models(data):
+    if isinstance(data, list):
+        data = pd.DataFrame(data)
 
     #Mistral AI and meta-llama need the Hugging face cl login to work
     models = [
+        # "Hon-Wong/VoRA-7B-Instruct",
+        # "Zyphra/Zamba2-7B-Instruct",
         "Qwen/Qwen2.5-7B-Instruct", 
         "tiiuae/falcon-7b-instruct",
         # "ibm-granite/granite-3.2-8b-instruct",
@@ -127,9 +131,7 @@ def process_models(data):
             row_time = row_end_time - row_start_time
             print(f"Time taken for Row {index + 1}: {row_time:.2f} seconds\n")
 
-            # Save data
-            data_to_save.append(
-                {
+            obj = {
                     "Model": model_name,
                     "Relevant Prompt": rel_prompt,
                     "Irrelevant Prompt": irr_prompt,
@@ -140,7 +142,9 @@ def process_models(data):
                     "Irrelevant Response": response_irr,
                     "Identify Irrelevant Context Response": response_irr_context,
                 }
-            )
+
+            # Save data
+            data_to_save.append(obj)
 
         #delete model and free up cache
         del model
@@ -255,13 +259,8 @@ def compare_identified_responses(irr_ask_prompt, irr_context, response_irr_conte
 
 
 def save_responses_only_to_csv(output_path, filename, data):
-    data_to_save = process_models(data)
     processed_outputs = os.path.join(output_path, filename)
-
-    # Ensure the output directory exists
     os.makedirs(output_path, exist_ok=True)
-
-    # Check if the file already exists
     file_exists = os.path.exists(processed_outputs)
 
     # Save the output that passed to a CSV
@@ -281,7 +280,7 @@ def save_responses_only_to_csv(output_path, filename, data):
         if not file_exists:
             writer.writeheader()
         
-        writer.writerows(data_to_save)
+        writer.writerows(data)
 
 
 def save_responses_and_evaluation_to_csv(output_path, filename, data):
@@ -397,7 +396,6 @@ def main():
     save_responses_and_evaluation_to_csv(output_data_folder, "combined_output_file.csv", data_combined)    
     
     # Clear the model to free memory
-    del llama70b
     torch.cuda.empty_cache()
 
     # Calculate and print total execution time

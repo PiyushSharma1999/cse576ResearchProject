@@ -16,13 +16,15 @@ class DeepSeekPreprocess:
 
         # Column name mapping
         self.column_mapping = {
-            "domain": "Prompt without irrelevant context",
-            "clean_prompt": "Prompt with irrelevant context",
+            "clean_prompt": "Prompt without irrelevant context",
             "irrelevant_context": "Irrelevant context",
-            "combined_prompt": "Prompt with irrelevant context and asking for irrelevant context",
+            "combined_prompt": "Prompt with irrelevant context",
             "expected_answer": "Correct answer",
-            "irrelevant_context_identification_prompt": "Irrelevant context identification prompt"
+            "irrelevant_context_identification_prompt": "Prompt with irrelevant context and asking for irrelevant context"
         }
+
+        if 'domain' in self.data.columns:
+            self.data = self.data.drop(columns=['domain'])
 
     def display_data(self):
         # Display first row of the data

@@ -8,36 +8,31 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 class GraniteModel:
     def __init__(self, model_name):
-
-        if "granite" in model_name or "falcom" in model_name or "Qwen2" in model_name or "Mistral" in model_name or "Llama" in model_name or "Human" in model_name or "aya" in model_name or "gemma" in model_name or "DeepSeek" in model_name or "Qwerky" in model_name:
-            """ Load the Granite model and tokenizer """
-            print(f"Loading custom model: {model_name}")
-            self.model_name = model_name
-            if("Llama" in model_name):
-                self.model = AutoModelForCausalLM.from_pretrained(
-                    #config.model_path,
-                    model_name,
-                    device_map="auto",
-                    torch_dtype=torch.bfloat16,
-                    trust_remote_code=True,
-                )
-            else:
-                self.model = AutoModelForCausalLM.from_pretrained(
-                    #config.model_path,
-                    model_name,
-                    device_map=config.device,
-                    torch_dtype=torch.bfloat16,
-                )
-            self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-            self.sbert_model = SentenceTransformer('all-MiniLM-L6-v2')
+        self.token = "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"
+        
+        # Skip the login process and load the model directly using the token
+        print(f"Loading custom model: {model_name}")
+        self.model_name = model_name
+        
+        if "Llama" in model_name:
+            self.model = AutoModelForCausalLM.from_pretrained(
+                model_name,
+                use_auth_token=self.token,  # Use the token directly
+                device_map="auto",
+                torch_dtype=torch.bfloat16,
+                trust_remote_code=True,  # Trust the model's code if needed
+            )
         else:
             self.model = AutoModelForCausalLM.from_pretrained(
                 model_name,
-                device_map=config.device
+                use_auth_token=self.token,  # Use the token directly
+                device_map=config.device,
+                torch_dtype=torch.bfloat16,
+                trust_remote_code=True
             )
-            self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         
-        self.sbert_model = SentenceTransformer('all-MiniLM-L6-v2')
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.sbert_model = SentenceTransformer('all-MiniLM-L6-v2')  # Sentence transformer model
 
     def generate_response(self, prompt):
         """ Generate response from the model """
