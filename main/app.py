@@ -10,9 +10,15 @@ import csv
 from io import StringIO
 import torch
 import pandas as pd
+import warnings
+
+# Disable all warnings
+warnings.filterwarnings("ignore")
 
 def generate_prompts(model_name, llamaModel):
-    llamaPrompt = '''Create 30 reasoning problems from domains such as a leetcode problem or fictional storytelling. For each, include:
+    num_prompts = 30
+
+    llamaPrompt = f'''Create {num_prompts} reasoning problems from domains such as a leetcode problem or fictional storytelling. For each, include:
 
         1. A version of the prompt with 3 ore more sentences of context to help answer the question.
         2. A version of the same prompt *with* 3 or more lines of irrelevant context added. This context should be related to the topic but not helpful in solving the question. Place this irrelevant context **before** the question.
@@ -33,7 +39,7 @@ def generate_prompts(model_name, llamaModel):
         Now generate 30 such rows in this format.
     '''
 
-    print("generating prompts")
+    print(f"Generating {num_prompts} prompts...")
 
     # will generate the input data
     response_csv = llamaModel.generate_response(llamaPrompt)
@@ -41,12 +47,13 @@ def generate_prompts(model_name, llamaModel):
     # Wrap it in StringIO so csv.DictReader can parse it like a file
     csvfile = StringIO(response_csv)
 
-    print("Finished generating responses")
+    print("Finished generating {num_prompts} prompts...")
     return csvfile
 
 
 def save_input_prompts_to_csv(csvfile):
-    """Save the generated prompts to a CSV file."""
+    print("Saving generated prompts to CSV file...")
+
     fieldnames = [
         "Prompt without irrelevant context", 
         "Prompt with irrelevant context", 
@@ -74,17 +81,20 @@ def save_input_prompts_to_csv(csvfile):
             writer.writeheader()
         writer.writerows(data_to_save)
 
+    print(f"Generated prompts saved to {file_path}.")
+
 
 def process_models(data):
+    print("Processing models...")
+
     if isinstance(data, list):
         data = pd.DataFrame(data)
 
     #Mistral AI and meta-llama need the Hugging face cl login to work
     models = [
-        # "Hon-Wong/VoRA-7B-Instruct",
-        # "Zyphra/Zamba2-7B-Instruct",
-        "Qwen/Qwen2.5-7B-Instruct", 
-        "tiiuae/falcon-7b-instruct",
+        "Zyphra/Zamba2-7B-Instruct", # DONE 
+        "Qwen/Qwen2.5-7B-Instruct",  # DONE
+        "tiiuae/falcon-7b-instruct", # DONE
         # "ibm-granite/granite-3.2-8b-instruct",
         # "mistralai/Mistral-7B-Instruct-v0.3",
         # "meta-llama/Llama-3.1-8B-Instruct",
@@ -108,7 +118,7 @@ def process_models(data):
     data_to_save = []
     for model_name in models:
         model = GraniteModel(model_name) # todo - rename
-        print("loaded model: " + model_name)
+        print("Loaded model: " + model_name)
 
         for index, row in data.iterrows():
             row_start_time = time.time()  # Start timer for this row
@@ -150,10 +160,15 @@ def process_models(data):
         del model
         torch.cuda.empty_cache()
 
+    
+    print(f"Finished processing {len(model)} models")
+
     return data_to_save
 
 
 def evaluate_responses(data_to_save, llamaModelName):
+    print("Evaluating responses...")
+
     llama70b = GraniteModel(llamaModelName)
 
     data_passed = []
@@ -208,7 +223,7 @@ def evaluate_responses(data_to_save, llamaModelName):
             to_add["Identified"] = "no"
 
         # ad to grand total
-        print("Irrelevant prompt: ", irr_prompt, "Identified: ", to_add["Identified"], "Tricked: ", to_add["Tricked"])
+        print("Model: ", row["Model"], " |  Identified: ", to_add["Identified"], " |  Tricked: ", to_add["Tricked"])
         data_combined.append(to_add)
 
     print("Finished evaluating responses", "", len(data_passed), "passed and", len(data_not_passed), "not passed", "", len(data_identified_correctly), "identified correctly", "", len(data_identified_incorrectly), "identified incorrectly")
@@ -391,6 +406,7 @@ def main():
     data_passed, data_not_passed, data_identified_correctly, data_identified_incorrectly, data_combined = evaluate_responses(data_to_save, llamaModelName)    
 
     # Save results to CSV files
+    print("Saving evaluation results to CSV files...")
     save_responses_and_evaluation_to_csv(output_data_folder, "output_passed_file.csv", data_passed)
     save_responses_and_evaluation_to_csv(output_data_folder, "output_not_passed_file.csv", data_not_passed)
     save_responses_and_evaluation_to_csv(output_data_folder, "combined_output_file.csv", data_combined)    
@@ -401,7 +417,7 @@ def main():
     # Calculate and print total execution time
     total_end_time = time.time()
     total_time = total_end_time - total_start_time
-    print(f"Total Execution Time: {total_time:.2f} seconds")
+    print(f"Finished! Total Execution Time: {total_time:.2f} seconds")
 
 if __name__ == "__main__":
     main()
